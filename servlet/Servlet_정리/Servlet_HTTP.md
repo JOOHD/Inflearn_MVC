@@ -1,18 +1,13 @@
-# 계기
-Spring Framework, Spring Boot 만 공부하고 사용해오다가,
-회사 실무에서 DDP(동대문 플라자) 공공기관 프로젝트를 인계 받게 되었습니다.
-그런데 Servlet 관련 코드들이 기반으로 구축 되어있어서 Servlet 관련 기술의 부족함을 느끼게 되어 강의를 수강 받으면서 정리하는 계기가 되었습니다.
-
 # 본문
 
 ## Servlet container 동작 방식
-![Servlet_Request_Response](./img/servlet.png)
+![Servlet_Request_Response](./Servlet_img/servlet.png)
 
 ### HttpServletRequest 역할
 servlet은 개발자가 HTTP 요청 메시지를 편리하게 사용할 수 있도록 개발자 대신에
 HTTP 요청 메시지를 파싱한다. 그리고 그 결과를 HttpServletRequest 객체에 담아서 제공한다.
 
-![HTTP_Request_Message](./img/HTTP_Message.png)
+![HTTP_Request_Message](./Servlet_img/HTTP_Message.png)
 
 ###  START LINE
 
