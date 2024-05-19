@@ -229,8 +229,121 @@
 
     Model : view에 출력할 데이터를 담아둔다.
     view가 필요한 데이터를 모두 model에 담아서 전달해주는 역할.
+    HttpServletReqeust 객체를 사용하고, request는 내부에 데이터 저장소를 가지고 있는데, request.set/getAttribute()로 데이터를 조회, 보관.
 
     View : model에 담겨있는 데이터를 사용해서 화면을 그리는 일에 집중.(HTML 생성.)
 
 ### MVC패턴2
-![MVC2_pattern](./Servlet_img/MVC2.png)    
+![MVC2_pattern](./servlet_img/mvc2.png)  
+
+### MvcMemberFormServlet (mvc패턴)
+    public class MvcMemberFormServlet extends HttpServlet {
+
+        @Override
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            String viewPath = "/WEB-INF/views/new-form.jsp";
+            RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+
+            dispatcher.forward(request, response);
+        }
+    }
+
+    dispatcher.forward() : 다른 서블릿이나 JSP로 이동할 수 있는 기능.
+    /WEN-INF : 이 경로안에 JSP가 있으면 외부에서 직접 JSP를 호출할 수 있다.
+
+    Redirect vs forward
+    리다이렉트는 실제 클라이언트에 응답이 나갔다가, 클라이언트가 redirect 경로로 다시 요청. 
+    따라서 클라이언트가 인지할 수 있고, URL 경로도 실제로 변경.
+
+    반면에 포워드는 서버 내부에서 일어나는 호출이기 때문에 클라이언트가 전혀 인지하지 못한다.
+
+    <!-- 상대경로 사용, [현재 URL이 속한 계층 경로 + /save] -->
+    <form action="save" method="post">
+        username: <input type="text" name="username" />
+        age:      <input type="text" name="age" />
+        <button type="submit">전송</button>
+    </form>
+
+    위에 코드에서 form의 action을 보면 절대 경로(/로 시작)가 아니라,
+    상대경로(/로 시작x)인 것을 볼 수 있다.
+    이렇게 상대경로를 사용하면 form 전송시 현재 URL이 속한 계층 경로 +save가 호출된다.
+
+    현재경로 : /servlet-mvc/members/
+    결과 : /servlet-mvc/members/save
+
+### MvcMemberSaveServlet - 회원 저장(mvc패턴)
+    String username = request.getParameter("username");
+    int age = Integer.parseInt(request.getParameter("age"));
+        
+    Member member = new Member(username, age);
+    memberRepository.save(member);
+
+    //Model에 데이터를 set(보관), get(꺼냄)Attribute()
+    request.setAttribute("member", member);
+
+    String viewPath = "/WEB-INF/views/save-request.jsp";
+    RequestDispatcher dispatcher = request.getReqeustDispatcher(viewPath);
+    dispatcher.forward(request, response);
+
+    <ul>
+        <li>id=${member.id}</li>
+        <li>username=${member.username}</li>
+        <li>age=${member.age}</li>
+    </ul>
+
+    JSP의 ${} 문법을 제공하는데, 이 문법을 사요하여 request의 attribute에 담긴 데이터를 편리하게 조회할 수 있다.
+
+### MvcMemberListServlet - 회원 목록(mvc패턴)    
+    List<Member> members = memberRepository.findAll();
+       
+    request.setAttribute("members", members);
+
+    String viewPath = "/WEB-INF/views/members.jsp";
+    RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+
+    dispatcher.forward(request, response);
+
+     <table>
+    <thead>
+        <th>id</th>
+        <th>username</th>
+        <th>age</th>
+    </thead>
+    <tbody>
+        <c:forEach var="item" items="${members}">
+            <tr>
+                <td>${item.id}</td>
+                <td>${item.username}</td>
+                <td>${item.age}</td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
+
+### MVC 패턴 없이, JSP를 사용 했을 경우
+    <%
+        for (Member member : members) {
+                out.write("    <tr>");
+                out.write("        <td>" + member.getId() + "</td>");
+                out.write("        <td>" + member.getUsername() + "</td>");
+                out.write("        <td>" + member.getAge() + "</td>");
+                out.write("    </tr>");
+        }
+    %>
+
+### MVC 패턴 - 한계
+    MVC 패턴을 이용해 Controller / View 랜더링의 역할을 명확하게 구분했지만, Controller의 중복되는 코드, 불필요한 코드가 많이 보인다.
+
+    1) forward 중복
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response); 
+     
+    2) ViewPath 중복
+        String viewPath = "/WEB-INF/views/new-form.jsp";
+
+### 문제점 정리 
+    공통으로 처리해야 하는 부분이 점점 더 많이 증가할 것이다.
+    이 문제를 해결하려면 컨트롤러 호출 전에 먼저 공통 기능을 처리.
+
+### 해결 방안
+    Front Controller 패턴을 도입.            
