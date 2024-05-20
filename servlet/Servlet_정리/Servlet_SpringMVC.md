@@ -173,9 +173,144 @@
     5.view.render()
     view.render()가 호출되고 InternalResourceView는 forward()를 사용해서 JSP를 실행한다.
 
+### 스프링 MVC - 시작하기
+    ● @RequestMapping
+      스프링은 어노테이션을 활용에 매우 유연하고, 실용적인 컨트롤러를 만들었는데 이것이 @RequestMapping 어노테이션을 사용하는 컨트롤러이다.
 
+### SpringMemberFormControllerV1 - 회원 등록(@RequestMapping 적용)      
+    @Controller
+    public class SpringMemberFormControllerV1 {
 
+        @RequestMapping("/springmvc/v1/members/new-form")
+        public ModelAndView process() {
+            return new ModelAndView("new-form");
+        }
+    }
 
+    ● @Controller
+        -스프링이 자동으로 스프링 빈으로 등록한다.
+        (내부에 @Component 어노테이션이 있어서 컴포넌트 스캔의 대상이 된다.)
+        - 스프링 MVC에서 어노테이션 기반 컨트롤러로 인식한다.
+         
+    ● @RequestMapping : 요청 정보를 매핑한다. 해당 URL이 호출되면 이 메서드가 호출된다. (메서드의 이름은 임의로 지으면 된다.)
+
+        기존 매핑 url 
+        @WebServlet(name = "memberFormServlet", urlPatterns = "/servlet/members/new-form")
+
+        @RequestMapping 사용 시
+        @RequestMapping("/springmvc/v1/members/new-form")
+
+    ● ModelAndView : 모델과 뷰 정보를 담아서 반환한다.
+
+    ● addObject() : 스프링이 제공하는 ModelAndView를 통해 Model 데이터를 추가할 때는 addObject()를 사용하면 된다. 이 데이터는 이후 뷰를 렌더링 할 때 사용된다.
+    
+### SpringMemberControllerV2
+    /**
+     * 클래스 단위
+     * @RequestMapping 클래스 레벨과 메서드 레벨 조합
+     */
+    @Controller
+    @RequestMapping("/springmvc/v2/members")
+    public class SpringMemberControllerV2 {
+
+        private MemberRepository memberRepository = MemberRepository.getInstance();
+
+        @RequestMapping("/new-form")    // 회원 등록 폼
+        public ModelAndView newForm() {
+            return new ModelAndView("new-form");
+        }
+
+        @RequestMapping("/save")
+        public ModelAndView save(HttpServletReqeust request, HttpServletResponse response) {
+
+            String username = request.getParameter("username");
+            int age = Integer.parseInt(request.getParameter("age"));
+
+            Member member = new Member(username, age);
+            memberRepository.save(member);
+
+            ModelAndView mav = new ModelAndView("save-result");
+            mav.addObject("member", member)'
+            return mav;
+        }
+
+        @RequestMapping
+        public ModelAndView members() {
+
+            List<Member> members = memberRepository.findAll();
+
+            ModelAndView mav = new ModelAndView("members");
+            mav.addObject("members", member);
+            return mav;
+        }
+    }
+
+### 컨트롤러 클래스 조합
+    /springmvc/v2/members 라는 부분에 중복이 있다.
+    @RequestMapping("/springmvc/v2/members/new-form")
+    @RequestMapping("/springmvc/v2/members")
+    @RequestMapping("/springmvc/v2/members/save")
+
+    위에 코드를 클래스 레벨에 다음과 같이 @RequestMapping을 두면 조합 가능.
+    클래스 레벨 @RequestMapping("/springmvc/v2/members")
+    /springmvc/v2/members/new-form
+    /springmvc/v2/members/save
+    /springmvc/v2/members
+
+###  SpringMemberControllerV3
+    /*
+     * v3
+     * model 도입
+     * ViewName 직접 반환
+     * @RequestParam 사용
+     * @RequestMapping -> @GetMapping, @PostMapping
+     */
+    @Controller
+    @RequestMapping("/springmvc/v3/members")
+    public class SpringMemberControllerV3 {
+
+        private MemberRepository memberRepository = MemberRepository.getInstance();
+
+        @GetMapping("/new-form")
+        public String newForm() {
+            return "new-form";
+        }
+
+        @PostMapping("/save")
+        public String save(
+            @RequestParam("username") String username,
+            @RequestParam("age") int age,
+            Model model) {
+
+            Member memebr = new Member(username, age);
+            memberRepository.save(member);
+
+            model.addAttribute("member", member);
+            return "save-result";
+            }
+
+        @GetMapping
+        public String members(Model model) {
+            List<Member> members = memberRepository.findAll();
+            model.addAttribute("members", members);
+            return "members";
+        }
+    } 
+
+    ● Model 파라미터
+    save(), members()를 보면 Model을 파라미터로 받는 것을 확인할 수 있다.
+
+    ● viewName 직접 반환
+    뷰의 논리 이름을 반환할 수 있다.
+
+    ● @RequestParam 사용
+    스프링 HTTP 요청 파라미터를 @RequestParam으로 받을 수 있다.
+    @RequestParam("username")은 request.getParameter("username")와 거의 같ㅌ은 코드라 생각하면 된다.
+
+    ● @RequestMapping -> @GetMapping, @PostMapping
+    @RequestMapping은 URL만 매칭하는 것이 아니라, HTTP Methos도 함께 구분할 수 있다. 
+    ex) @RequestMapping(value = "/new-form", method = RequestMethod.GET)
+        위에 코드를 @GetMapping(value = "/new-form")으로 축약 가능하다.
 
 
 
