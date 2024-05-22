@@ -3,7 +3,7 @@
 ### Jar vs War
     JSP를 사용하지 않기 때문에 Jar를 사용하는 것이 좋다.(SpringBoot)
     Jar를 사용하면 항상 내장 서버(톰캣등)를 사용하고, webapp 경로도 사용하지 않는다. 내장 서버 사용에 최적화 되어 있는 기능이다.
-    War를 사용하면 내장 서보도 사용가능 하지만, 주로 외부 서버에 배포하는 목적.
+    War를 사용하면 내장 서버도 사용가능 하지만, 주로 외부 서버에 배포하는 목적.
 
 ### Logging
     앞으로는 System.out.println() 같은 시스템 콘솔을 사용해서 필요한 정보를 출력하지 않고, 로깅 라이브러리를 사용해서 로그를 출력한다.
@@ -165,6 +165,7 @@
     public class RequestParamController {
         /*
          * 반환 타입이 없으면서 이렇게 응답에 값을 직접 넣으면, view 조회x
+         * 반환 타입 void = response.~~ 안된다는 코드
          */
          @RequestMapping("/request-param-v1")
          public void reqeustParamV1(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -175,3 +176,199 @@
          }
     }
 
+    ● 위에 코드에서는 단순히 HttpServletRequest가 제공하는 방식으로 조회.
+
+    ● 참고
+    Jar를 사용하면 webapp 경로를 사용할 수 없다. 정적 resources도 클래스 경로에 함께 포함해야 한다.
+
+### @RequestParam - requestParamV2
+    /**
+     * @RequestParam 사용
+     * -파라미터 이름으로 바인딩
+     * @ResponseBody추가
+     * -View 조회를 무시하고, Http message body에 직접 해당 내용 입력 
+     */
+    @ResponseBody
+    @RequestMapping("/request-param-v2") 
+    public String requestParamV2(
+            @RequestParam("username") String memberName,
+            @RequestParam("age") int age) {
+
+        return "ok";
+    }
+
+    ● @RequestParam : 파라미터 이름으로 바인딩
+    ● @ResponseBody : view 조회를 무시하고, HTTP message body에 직접 내용 입력.
+
+    ● @RequestParam의 name(value) 속성의 파라미터 이름으로 사용.
+        @RequestParam("username") String memberName
+            - request.getParameter("username")
+
+### @RequestParam - requestParamV3    
+    /**
+     * @RequestParam 사용
+     * HTTP 파라미터 이름이 변수 이름과 같으면 @RequestParam(name="xx") 생략 가능
+     */
+    @ResponseBody
+    @RequestMapping("/request-param-v3")
+    public String requestParamV3(
+            @RequestParam String username,
+            @RequestParam int age) {
+
+        return "ok";
+    }
+
+### @RequestParam - requestParamV4
+    /**
+     * @RequestParam 사용
+     * String, int, Integer 등의 단순 타입이면 @RequestParam도 생략 가능
+     */
+    @ResponseBody
+    @RequestMapping("/request-param-v3")
+    public String requestParamV3(String username,int age) {
+        return "ok";
+    } 
+
+    ● @RequestParam을 생략하면 스프링 MVC는 내부에서 required=false를 적용
+
+### @RequestParam - requestParamRequired
+    /**
+     * @RequestParam.required
+     * /request-param-required -> username이 없으므로 400예외
+     *
+     * 주의!
+     * /request-param-required?username= -> 빈문자로 통과
+     *
+     * 주의!
+     * /request-param-required
+     * int age -> null을 int에 입력하는 것은 불가능, 따라서 Integer      변경해야 함(또는 다음에 나오는 -defaultValue 사용)
+     */
+    @ResponseBody
+    @RequestMapping("/request-param-required")
+    public String requestParamRequired(
+            @RequestParam(required = true) String username,
+            @RequestParam(required = false) Integer age) {
+        
+        return "ok";
+    }
+
+    ● 기본 값을 적용할 수 있다.
+        @RequestParam(defaultValue = "guest") String username,
+        파라미터에 값이 없는 경우 defaultValue를 사용하면 기본 값 적용 가능.
+        이미 기본 값이 있으므로 required는 의미가 없다.
+
+### @RequestParam - requestParamMap 
+    /**
+     * @RequestParam Map, Map(key = value)
+     */
+    @ResponseBody
+    @RequestMapping("/required-param-map") 
+    public String requestParamMap(@RequestParam Map<String, Object> paramMap) {
+        return "ok";
+    }
+
+### HTTP 요청 파라미터 - @ModelAttributeV1
+    ● 보통 요청 파라미터를 받아서 객체를 만들고, 그 객체에 값을 넣어주는 코드.
+        -나는 이런 방법을 Command Object 객체를 이용한다. 라고 알고 있다.
+        @RequestParam String username,
+        @RequestParam int age,
+
+        HelloData data = new HelloData();
+        data.setUsername(username);
+        data.setAge(age);
+
+    ● ModelAttribute 사용
+        HelloData
+        @Data
+        public class HelloData{
+            private String username;
+            private int age;
+        }
+
+        ● @Data(lombok)
+        @Getter, @Setter, @ToString, @RequiredArgsConstructor를 자동 적용.
+
+    /**
+     * 참고 : model.addAttribute(helloData) 코드도 자동 적용,
+     */
+    @ResponseBody
+    @RequestMapping("/model-attribute-v1")
+    public String modelAttributeV1(@ModelAttribute HelloData helloData) {
+        return "ok";
+    }
+
+    ● HelloData 객체가 생성되고, 요청 파라미터 값도 모두 들어가 있다.
+        1) HelloData 객체를 생성한다.
+        2) 요청 파라미터의 이름으로 HelloData 객체의 프로퍼티를 찾는다.
+            해당 프로퍼티의 setter를 호출해서 파라미터의 값을 바인딩 한다.
+            ex) 파라미터 이름이 username이면, setUsername() 메서드를 찾아서 호출하면서 값을 입력한다.
+
+    ● Property
+    객체에 getUsername(), setUsername() 메서드가 있다면, 이 객체는 username 이라는 프로퍼티를 가지고 있다.
+    username 프로퍼티의 값을 변경하면 setUsername() 이 호출되고, 조회하면 getUsername() 이 호출된다.       
+
+### HTTP 요청 파라미터 - RequestBodyStringController
+    ● 요청 파라미터와 다르게, HTTP 메시지 바디를 통해 데이터가 직접 넘어오는 경우는 @RequestParam, @ModelAttribute 를 사용할 수 없다.
+    (물론 html form 형식으로 전달되는 경우는 요청 파라미터로 인정된다.)
+
+    /**
+     * HTTP 메시지 바디의 데이터를 InputStream 을 사용해서 직접 읽을 수 있다.
+     */     
+    @Slf4j
+    @Controller
+    public class RequestBodyStringController {
+
+        @PostMapping("/request-body-string-v1")
+        public void requestBodyString(HttpServletRequest request,
+        HttpServletResponse response) throws IOException {
+
+            ServletInputStream inputStream = request.getInputStream();
+            String messageBody = StreamUilts.copyToString(inputStream, StandardCharset.UTF_8);
+
+            response.getWriter().writer("ok");
+        }
+    }
+     
+### Input,Output 스트림, Reader - requestBodyStringV2
+    /**
+     * InputStream(Reader) : HTTP 요청 메시지 바디의 내용을 직접 조회
+     * OutputStream(Reader) : HTTP 요청 메시지 바디의 내용을 결과 출력
+     */     
+    @PostMapping("/request-body-string-v2")
+    public void requestBodyStringV2(InputStream, Writer responseWriter) throws IOException {
+
+        String messageBody = StreamUtils.copyToSring(inputStream, StandardCharsets.UTF_8);
+
+        responseWriter.write("ok");
+    }
+
+### HttpEntity - requestBodyStringV3
+    /**
+     * HttpEntity: HTTP header, body 정보를 편리하게 조회
+     * - 메시지 바디 정보를 직접 조회(@RequestParam X, @ModelAttribute X)
+     * - HttpMessageConverter 사용 -> StringHttpMessageConverter 적용
+     *
+     * 응답에서도 HttpEntity 사용 가능
+     * - 메시지 바디 정보 직접 반환(view 조회X)
+     * - HttpMessageConverter 사용 -> StringHttpMessageConverter 적용
+     */
+    @PostMapping("/request-body-string-v3")
+    public HttpEntity<String> requestBodyStringV3(HttpEntity<String> httpEntity) {
+        String messageBody = httpEntity.getBody();
+
+        return new HttpEntity<>("ok");
+    }
+
+### @RequestBody - requestBodyStringV4
+    /**
+     * @ResponseBody
+     * -메시지 바디 정보를 직접 반환(view 조회X)
+     */
+    @ResponseBody
+    @PostMapping("/request-body-string-v4")
+    public String requestBodyString(@RequestBody String messageBody) {
+        return "ok";
+    } 
+
+    ● 참고로 헤더 정보가 필요하다면 HttpEntity를 사용하거나 @RequestHeader를 사용하면 된다.
+    이렇게 메시지 바디를 직접 조회하는 기능은 요청 파라미터를 조회하는 @RequestParam, @ModelAttribute와는 전혀 관계가 없다.
