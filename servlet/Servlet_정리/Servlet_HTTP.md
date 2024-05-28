@@ -1,6 +1,6 @@
 # 본문
 
-## Servlet container 동작 방식
+### Servlet container 동작 방식
 ![Servlet_Request_Response](./servlet_img/servlet.png)
 
 ### HttpServletRequest 역할
