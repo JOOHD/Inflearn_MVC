@@ -1,7 +1,7 @@
 # 본문
 
 ### 서비스 제공 흐름
-![service_flow](./servlet_img/service_flow.png)
+![service_flow](./springmvc/spring_img/service_flow.png)
 
 ### Item - 상품 객체
     @Data
@@ -127,8 +127,16 @@
     - th:href="@{/basic/items/{itemId}(itemId=${item.id})}"
     - 상품 ID를 선택하는 링크를 확인해보자
     - 경로 변수 {itemId} 뿐만 아니라 쿼리 파라미터도 생성한다.
-    - ex) th:href="@{/basic/items/{itemId}(itemId=${item.id}, query='test')}"
-        - 생성 링크 : http://localhost:8080/basic/items/1?query=test
+      - ex) th:href="@{/basic/items/{itemId}(itemId=${item.id}, query='test')}"
+        - 생성 링크 : http://localhost:8080/basic/items/1?query=test 
+    - URL에 쿼리 파라미터 추가    
+      - ex) th:href="@{/search(query=${query})}"
+        - 생성 링크 : http://localhost:8080/search?query=keyword
+    - 다중 쿼리 파라미터 추가
+      - ex) th:href="@{/search(query=${query}, page=${page})}"  
+        - 생성 링크 : http://localhost:8080/search?query=keyword&page=2
+    - 절대 URL 사용
+      - ex) th:href="@{http://www.example.com}"   
 
     ● URL 링크 간단히
     - th:href="@{|/basic/items/${item.id}|}"
@@ -359,9 +367,9 @@
     상품 등록을 완료하고 웹 브라우저의 새로고침 버튼을 클릭해보자.
     상품이 계속해서 중복 등록되는 것을 확인할 수 있다.
 
-![duplication1](./servlet_img/duplication1.png)    
+![duplication1](./springmvc/spring_img/duplication1.png)    
 
-![duplication2](./servlet_img/duplication2.png)
+![duplication2](./springmvc/spring_img/duplication2.png)
 
     ● 중복되는 문제 
     웹 브라우저의 새로 고침은 마지막에 서버에 전송한 데이터를 다시 전송한다.
@@ -371,7 +379,7 @@
     그래서 내용은 같고, ID만 다른 상품 데이터가 계속 쌓이게 된다.
 
 ### 중복 문제 해결
-![duplication3](./servlet_img/duplication3.png)
+![duplication3](./springmvc/spring_img/duplication3.png)
 
     ● 중복 문제 해결
     웹 브라우저의 새로 고침은 마지막에 서버에 전송한 데이터를 다시 전송한다.

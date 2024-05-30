@@ -1,10 +1,10 @@
 # 본문
 
 ### SpringMVC 전체 구조
-![Framework](./servlet_img/framework.png)
+![Framework](./springmvc/spring_img/framework.png)
 
 ### SpringFramework 전체 구조
-![MVC](./servlet_img/springMVC.png)
+![MVC](./springmvc/spring_img/springMVC.png)
 
 ### SpringFramework vs SpringMVC
     ● FrontController -> dispatcherServlet
