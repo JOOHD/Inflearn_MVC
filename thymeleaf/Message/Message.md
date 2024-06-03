@@ -125,3 +125,6 @@
                 th:onclick="|location.href='@{/message/items}'|"
                 type="button" 
                 th:text="#{button.cancel}">취소</>
+
+    - 위 addForm.html 코드를 application.properties의 설정 메시지와 #{}를 적용하여 렌더링하게 되면 application.properties의 문자가 나오게 된다.
+    
