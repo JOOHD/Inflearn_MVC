@@ -158,6 +158,10 @@ dㅇ## 본문
 
         ● v1/addForm.html 과 비교
         - ${errors?.containskey('globalError')} -> "${#fields.hasGlobalErrors()}, errors?. 코드가 #fields. 로 바뀌었다.
+
+            ● ${#...} : #을 붙이는 이유?
+            - 타임리프에서 내장된 객체나 유틸리티 메서드를 호출하기 위해서.
+              - 타임리프에는 여러 가지 내장된 객체와 유틸리티 메서드가 있으며, 이를 사용하기 위해서는 '#' 기호를 사용한다. 이러한 객체들은 타임리프 표준 표현식 EL 과 통합되어 있다. 위에 #field는 form binding과 검증 관련 유틸리티 메서드를 제공하는 타임리프의 내장 객체 중 하나이다.
       
         ● 코드 분석 및 흐름
         1) 입력 필드 바인딩 : 'th:field="*{itemName}"'는 모델의 'itemNanme' 필드와 바인딩되어 있다. 사용자가 이 필드에 값을 입력하면 서버로 전송된다.
@@ -186,3 +190,321 @@ dㅇ## 본문
             th:errorclass="field-error" 
             class="form-control" placeholder="이름을입력하세요">상품명 오류
         </div>
+
+### ValidationItemControllerV2 - addItemV2 (BindingResult2)
+    @PostMapping("/add")
+    public String addItemV2(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes RedirectAttributes) {
+
+        if(!StringUtils.hasText(item.getItemName())) {
+            bindingResult.addError(new FieldError("item", "itemName",
+            ite.getItemName(), false, null, null, "상품 이름은 필수"));
+        }
+
+        if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+            bindingResult.addError(new FieldError("item", "price", item.getPrice(), false, null, "가격은 1,000 ~ 1,000,000 까지 허용합니다."));
+        }
+
+        // 특정 필드 예외가 아닌 전체 예외
+        if(item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if(resultPrice < 10000) {
+                bindingResult.addError(new ObjectError("item", null, null, "가격 * 수량의 합은 10,000원 이상이어야 합니다. 현재 값 = " + resultPrice));
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            log.info("errors={}", bindingResult);
+            return "validation/v2/addForm";
+        }
+
+        // 성공 로직
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v2/items/{itemId}";
+    }
+
+    ● FieldError 생성자
+    - public FieldError(String objectName, 
+                        String field, 
+                        String defaultMessage)
+    - public FieldError(String objectName, (오류가 발생한 객체 이름)
+                        String field, (오류 필드)
+                        @Nullable Object rejectValue, (사용자가 입력한 값 = 거절된 값)
+                        boolean bindingResult, (바인딩 or 검증 실패인지 구분 해주는 값)
+                        @Nullable String[] codes, (메시지 코드)
+                        @Nullable Object[] arguments, (메시지에서 사용하는 인자)
+                        @Nullable String defaultMessage) (기본 오류 메시지)
+
+    ● FieldError, ObjectError 의 생성자는 codes, arguments를 제공한다. 이것은 오류 발생시 오류 코드로 메시지를 찾기 위해 사용된다.                        
+                            
+    ● 오류 발생시 사용자 입력 값 유지
+    new FieldError("item", "price", item.getPrice(), false, null, null, "가격은 1,000 ~ 1,000,000 까지 허용합니다.")                       
+        - 사용자의 입력 데이터가 컨트롤러의 @ModelAttribute 에 바인딩되는 시점에 오류가 발생하면 모델 객체에 사용자 입력 값을 유지하기 어렵다.
+        예를 들어 가격에 숫자가 아닌 문자가 입력된다면 가격은 Integer 타입이므로 문ㄷ자를 보관할 수 있는 방법이 없다. 그래서 오류가 발생한 경우 사용자 입력 값을 보관하는 별도의 방법이 필요하다.
+        그리고 이렇게 보관한 사용자 입력 값을 검증 오류 발생시 화면에 다시 출력하면 된다.
+
+        - fieldError는 오류 발생시 사용자가 입력 값을 저장하는 기능을 제공한다.
+        - rejectedValue는 오류 발생시 사용자 입력 값을 저장하는 필드이다.(fieldError를 사용해야 rejectedValue가 사용 가능 한가?)
+    
+    ● 타임리프의 사용자 입력 값 유지
+        th:field="*{price}"
+    타임리프의 th:field 는 매우 똑똑하게 작동하는데, 정상 상황에는 모델 객체의 값을 사용하지만, 오류가 발생하면 FieldError에서 보관한 값을 사용해서 값을 출력한다.
+
+        ex) 
+        @Controller
+        @RequestMapping("/items")
+        public class ItemController {
+
+            @PostMapping("/add")
+            public String addItem(@ModelAttribute Item item, BindingResult bindingResult) {
+
+                if(item.getPrice() <0) { // 값이 음수일 때
+                    bindingResult.addError(new FieldError("item", "price", item.gePrcie(), false));
+                }
+
+                if(bindingResult.hasErrors()) {
+                    return "item/addForm";
+                }
+
+                // save item logic here
+                return "redirect:/items";
+            }
+        }
+
+        ● view 에서 오류 메시지와 거부된 값 표시
+        <form th:object="${item} th:action="@{/items/add}" method="post">
+            <div>
+                <label for="price">Price</label>
+                <input type="text" id="price" th:field="*{price}" class="form-control"/>
+                <div class="field-error" th:if="${#fields.hasErrors('price')} th:errors="*{price}">Price Error</div>
+                    <span th:text="${#field.errors('price')}">Price Error</>
+                    <span th:text="${#fields.rejectedValue('price')}"></span> 
+            </div>
+
+            <button type="submit">Add Item</button>
+        </form>
+
+        ● 요약
+        - #fields.rejectedValue('price')는 거부된 값을 반환
+        - FieldError 를 사용하면 검증 오류가 발생한 필드와 관련된 자세한 정보를 저장할 수 있다.
+        - rejectedValue를 통해 거부된 값을 확인할 수 있다.
+        - 타임리프를 사용하여 뷰에서 오류 메시지와 거부된 값을 표시할 수 있다.
+    
+    ● errors 메시지 파일 생성
+    message.properties를 사용해도 되지만, 오류 메시지를 구분하기 쉽게 errors.properties라는 별도의 파일로 관리해보자.
+
+    스프링 부트가 인식할 수 있게 설정을 해준다.
+        - message.properties, errors.properties 두 파일을 모두 인식한다.
+        (생략하면 message.properties를 기본으로 인식한다.)
+        - 메시지 설정 추가
+        sprig.message.basename=message, errors
+        - errors.properties 추가
+            required.item.itemName=상품 이름은 필수입니다.
+            range.item.price=가격은 {0} ~{1} 까지 허용합니다.
+            max.item.quantity=수량은 최대 {0} 까지 허용합니다.
+            totalPriceMin=가격 * 수량의 합은 {0}원 이상이어야 합니다. 현재 값 = {1}
+        - 참고: errors_en.properties 파일을 생성하면 오류 메시지도 국제화 처리를 할 수 있다            
+
+### ValidationItemControllerV3 - addItemV3 (errors.properties)
+    if(!StringUtils.hasText(item.getItemName())) {
+        bindingResult.addError(new FieldError("item", "itemName",
+        item.getItemName(), false, new String[]{"required.item.itemName"}, null, null));
+    }
+
+    if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+        bindingResult.addError(new FieldError("item", "price", item.getPrice(), fasle, new String[]{"range.item.price"}, new Object[]{1000, 1000000}, null));
+    }
+
+    if(item.getQuantity() == null || item.getQuantity() > 10000) {
+        bindingResult.addError(new FieldError("item", "quantity", item.getQuantity(), false, new String[]{"max.item.quantity}, new Object[]{9999}, null));
+    }
+
+    // 특정 필드 예외가 아닌 전체 예외
+    if(item.getPrice() != null && item.getQuantity() != null) {
+        int resultPrice = item.getPrice() * item.getQuantity();
+        if(resultPrice < 10000) {
+            bindingResult.addError(new ObjectError("item", new String[]("totalPriceMin"), new Object[]{10000, resultPrice}, null));
+        }
+    }
+
+    if(bindingResult.hasErrors()) {
+        log.info("errors={}", bindingResult);
+        return "validation/v2/addForm";
+    }
+
+    ● addItemV2 와 차이점은
+    - errors.properties 설정을 추가하여 코드에 적용하였다.
+        - "상품 이름은 필수" -> new String[]{"required.item.itemName"}
+        - "가격은 1,000 ~ 1,000,000 까지 허용합니다." ->  new String[]{"range.item.price"}
+        - "수량은 최대 9,999 까지 허용합니다." ->  new String[]{"max.item.quantity"}
+        -  "가격 * 수량의 합은 10,000원 이상이어야 합니다. 현재 값 = " + resultPrice ->  new String[]{"totalPriceMin"}
+    
+    - codes : required.item.itemName를 사용해서 메시지 코드를 지정한다.
+    메시지 코드는 하나가 아니라 배열로 여러 값을 전달할 수 있는데, 순서대로 매칭해서 처음 매칭되는 메시지가 사용된다.
+    - arguments : Object[]{1000, 100000}를 사용해서 코드의 {0}, {1}로 치환할 값을 전달한다.
+    
+    ● FieldError, ObjectError 는 다루기가 너무 번거롭다.
+        오류 코드도 좀 더 자동화 할 수 있지 않을까? ex) item.itemName 처럼?
+
+      컨트롤러에서 BindingResult는 검증해야 할 객체인 target 바로 다음에 온다. 따라서 BindingResult는 이미 본인이 검증해야 할 객체인 target을 알고 있다.
+
+      ● 다음 컨트롤러에서 실행
+      log.info("objectName={}", bindingResult.getObjectName());
+        -> objectName=item // @ModelAttribute name
+      log.info("target={}", bindingResult.getTarget());
+        -> target=Item(id=null, itemName=상품, price=100, quantity=1234)  
+
+    BindingResult가 제공하는 rejectValue(), reject()를 사용하면 FieldError, ObjectError를 직접 생성하지 않고, 깔끔하게 검증 오루를 다룰 수 있다.        
+
+### ValidationItemControllerV4 - addItemV4 (rejectValue, reject)      
+    if(!StringUtils.hasText(item.getItemName())) {
+        bindingResult.rejectValue("itemName", "required");
+    }
+
+    if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+        bindingResult.rejectValue("price", "range", new Object[]{9999}, null);
+    }
+
+    // 특정 필드 예외가 아닌 전체 예외
+    if(item.getPrice() != null && item.getQuantity() != null) {
+        int resultPrice = item.getPrice() * item.getQuantity();
+        if(resultPrice < 1000) {
+            bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
+        }
+    }
+
+    if(bindingResult.hasErrors()) {
+        log.info("errors={}", bindingResult);
+        return "validation/v2/addForm";
+    }
+
+    ● addItemV3 와 차이점은
+        bindingResult.addError(new FieldError("item", "itemName",
+        item.getItemName(), false, new String[]{"required.item.itemName"}, null, null));
+        
+        위에 긴 코드가 
+        bindingResult.rejectValue("itemName", "required") 로 바뀜.
+
+        ● rejectValue()
+        - void rejectValue(@Nullable String, (오류 필드명)
+                           String errorCode, (오류 코드, messageResolver)
+                           @Nullable Object[] errorArgs, ({0}을 치환 위한 값)
+                           @Nullable String defaultMessage (오류 메시지를 찾을 수 없을 때, 사용하는 기본 메시지)
+                           );
+
+        앞에서 BindingResult 는 어떤 객체를 대상으로 검증하는지 target을 이미 알고있따. 따라서 target(item)에 대한 정보는 없어도 된다.
+        오류 필드명은 동일하게 price를 사용했따.
+
+    ● 축약된 오류 코드
+    FieldError() 를 직접 다룰 때는 오류 코드를 range.item.price와 같이 모두 입력했다. 그런데 rejectValue()를 사용하고 부터는 오류 코드를 range로 입력해도 잘 실해잉 되었다. 그 이유가 MessageCodesResolver 때문이다. 이제 알아보자        
+
+    ● 오류 코드와 메시지 
+    단순하게 만들면 범용성은 좋으나 세밀함이 부족해지고, 너무 자세하게 만들면 범용성이 떨어진다. 이를 해결하기 위해 아래 설정 처럼 메시지를 선택해 기용.
+    ex) required : 필수 값 입니다.
+    그런데 오류 메시지에 required.item.itemName 와 같이 객체명과 필드명을 조합한 세밀한 메시지 코드가 있으면 우선순위를 정해 사용한다.
+
+    이 우선순위를 정해주는 기능이 MessageCodesResolver 이다.
+
+### MessageCodesResolver
+    - 검증 오류 코드로 메시지 코드들을 생성한다.
+    - MessageCodesResolver 인터페이스이고, DefaultMessageCodesResolver는 기본 구현체이다.
+    - 주로 다음과 함께 사용 ObjectError, FieldError
+     
+    ● DefaultMessageCodesResolver 의 기본 생성 규칙
+    - 객체 오류
+    1. : code + "." + object name
+    2. : code 
+        ex) 오류 코드 : required, object name: item
+        1. : required.item
+        2. : required
+    
+    - 필드 오류
+    필드 오류의 경우 다음 순서로 4가지 메시지 코드 생성
+    1.: code + "." + object name + "." + field
+    2.: code + "." + field
+    3.: code + "." + field type
+    4.: code
+        ex) 오류 코드: typeMismatch, object name "user", field "age", field type: int
+        1. "typeMismatch.user.age"
+        2. "typeMismatch.age"
+        3. "typeMismatch.int"
+        4. "typeMismatch"
+    
+    ● 동작 방식
+    - rejectValue(), reject() 는 내부에서 MessageCodesResolver를 사용한다.
+    - FieldError, ObjectError의 생성자를 보면, 오류 코드를 하나가 아니라 여러 오류 코드를 가질 수 있다. MessageCodesResolver를 통해서 생성된 순서대로 오류 코드를 보관한다.
+    - 이 부분을 BindingResult 의 로그를 통해서 확인해보자
+        - codes [range.item.price, range.price, range.java.lang.Integer, range]
+    
+    ● FieldError rejectValue("itemName", "required")
+    다음 4가지 오류 코드를 자동으로 생성
+        required.item.itemName
+        required.itemName
+        required.java.lang.String
+        required
+
+    ● ObjectError reject("totalPriceMin")
+    다음 2가지 오류 코드를 자동으로 생성
+        totalPriceMin.item
+        totalPriceMin
+
+    크게 중요하지 않은 메시지는 범용성 있는 requried 같은 메시지로 끝내고, 정말 중요한 메시지는 꼭 필요할 때 구체적으로 적어서 사용하는 방식이 더 효과적이다.
+
+### validator 분리1
+    @Component
+    public class ItemValidator implements Validator {
+
+        @Override
+        public boolean supports(Class<?> clazz) {
+            return Item.class.isAssignableFrom(clazz);
+        }
+
+        @Override
+        public void validate(Object target, Errors errors) {
+            Item item = (Item) target;
+
+            ValidationUtils.rejectIfEmptyOrWhitespace(errors, "itemName", "required");
+        }
+    }  
+
+    ● 스프링은 검증을 체계적으로 제공하기 위해 다음 인터페이스를 제공한다.
+    public interface Validator {
+        boolean supports(Class<?> clazz);
+        void validate(Object target, Errors errors);
+    }  
+
+    - supports() {} : 해당 검증기를 지원하는 여부 확인
+    - validate(Object target, Errors errors) : 검증 대상 객체와 BindingResult
+ 
+### ValidationItemControllerV2 - addItemV5 (Validator)
+
+    private final ItemValidator itemValidator;
+
+    @PostMapping("/add")
+    public String addItemV5(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+
+        itemValidator.validate(item, bindingResult);
+    
+        if(bindingResult.hasErrors()) {
+            return "validation/v2/addForm";
+        }
+    }
+
+### ValidationItemControllerV2 - addItemV6 (@Validator)
+    @PostMapping("/add")
+    public String addItemV6(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+    
+        if(bindingResult.hasErrors()) {
+            log.info("errors={}", bindingResult);
+            return "validation/v2/addForm";
+        }
+    }
+
+    - validator를 직접 호출하는 부분이 사라지고, 대신에 검증 대상 앞에 @Validated가 붙었다.
+    
+    ● 동작 방식
+    - @Validaed 는 검증기를 실행하라는 어노테이션이다.
+    이 어노테이션이 붙으면 앞서 WebDataBinder 에 등록한 검증기를 찾아서 실행한다. 그런데 어러 검증기를 등록한다면 그 중에 어떤 검증기가 실행되어야 할지 구분이 필요하다. 이때 supports()가 사용된다.
+
+    여기서는 supports(Item.class) 호출되고, 결과가 true이므로 ItemValidator의 validate()가 호출된다.
