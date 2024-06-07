@@ -508,3 +508,10 @@ dㅇ## 본문
     이 어노테이션이 붙으면 앞서 WebDataBinder 에 등록한 검증기를 찾아서 실행한다. 그런데 어러 검증기를 등록한다면 그 중에 어떤 검증기가 실행되어야 할지 구분이 필요하다. 이때 supports()가 사용된다.
 
     여기서는 supports(Item.class) 호출되고, 결과가 true이므로 ItemValidator의 validate()가 호출된다.
+
+    ● 전체 흐름
+    1) 폼 제출: 사용자가 폼을 제출합니다.
+    2) 유효성 검증: 컨트롤러에서 @Validated와 BindingResult를 사용하여      유효성 검증을 수행합니다.
+    3) 오류 저장: 검증 오류가 발생하면 BindingResult에 FieldError 또는 ObjectError로 오류를 저장합니다.
+    4) 오류 확인: BindingResult의 메서드를 사용하여 오류를 확인합니다.
+    5) 오류 표시: 타임리프 템플릿에서 #fields 객체를 사용하여 오류 메시지를 표시합니다.
