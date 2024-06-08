@@ -208,3 +208,110 @@
             @Max(value = 9999, groups = SaveCheck.class) // 등록시에만 적용
             private Integer quantity;
         }
+
+        ● ValidationItemControllerV3 - 저장 로직에 SaveCheck Group 적용
+        @PostMapping("/add")
+        public String addItemV2(@Validated(SaveCheck.class) @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirecteAttributes) {}
+        - addItemV2() 생성, SaveCheck.class 적용
+        
+        ● 참고 @Valid에는 group를 적용할 수 없다. 사실, group 기능은 잘 사용되지 않는다. 그 이유는 실무에서는 주로 다음에 등장하는 등록용 폼 객체와 수정용 폼 객체를 분리해서 사용하기 때문이다.
+
+### Form 전송 객체 분리 
+    실무에서는 groups를 잘 사용하지 않는데, 그 이유가 다른 곳에 있다. 바로 등록시 폼에서 전달하는 데이터가 Item 도메인 객체와 딱 맞지 않기 때문이다.
+
+    실무에서는 회원 등록시 회원과 관련된 데이터만 전달받은 것이 아니라 약관 정보도 추가로 받는 등 Item과 관계없는 수 많은 부가 데이터가 넘어온다.
+    그래서 보통 Item을 직접 전달받는 것이 아니라, 복잡한 폼의 데이터를 컨트롤러까지 전달할 별도의 객체를 만들어서 전달한다. 
+
+    예를 들면 ItemSaveForm이라는 폼을 전달하는 전용 객체를 만들어서 @ModelAttribute로 사용한다. 이것을 통해 컨트롤러에서 폼 데이터를 전달 받고, 이후 컨트롤러에서 필요한 데이터를 사용해서 Item을 생성한다.
+
+        ● 폼 데이터 전달을 위한 별도의 객체 사용
+        HTML Form -> ItemSaveForm -> Controller -> Item 생성 -> Repository
+            - 장점 : 전송하는 폼 데이터가 복잡해도 거기에 맞춘 별도의 폼 객체를 사용해서 데이터를 전달 받을 수 있다. 보통 등록과, 수정용으로 별도의 폼 객체를 만들기 때문에 검증이 중복되지 않는다.
+            - 단점 : 컨트롤러에서 Item 객체를 생성하는 변환 과정이 추가된다.
+
+    ● 기존 ITEM
+    @Data
+    public class Item {
+        private Long id;
+        private String itemName;
+        private Integer price;
+        private Integer quantity;
+    }
+
+    ● ItemSaveForm - 저장용 
+    @Data
+    public class ItemSaveForm {
+        @NotBlank
+        private String itemName;
+        @NotNull
+        @Range(min = 1000, max = 1000000)
+        private Integer price;
+        @NotNull
+        @Max(value = 9999)
+        private Integer quantity;
+    }
+
+    ● ItemUpdateForm - 수정용
+    @Data
+    public class ItemUpdateForm {
+        @NotNull
+        private Long id;
+        @NotBlank
+        private String itemName;
+        @NotNull
+        @Range(min = 1000, max = 1000000)
+        private Integer price;
+        //수정에서는 수량은 자유롭게 변경할 수 있다.
+        private Integer quantity;
+    }
+
+    ● VlidationItemControllerV4
+    @Slf4j
+    @Controller
+    @RequestMapping("/validation/v4/items")
+    @RequiredArgsConstructor
+    public class ValidationItemControllerV4 {
+
+        private final ItemRepository itemRepository;
+
+        @GetMapping
+        public String items(Model model) {
+            List<Item> items = itemRepository.findAll();
+            model.addAttribute("items", items);
+            return "validation/v4/items";
+        }
+
+        @GetMapping("/{itemId}")
+        public String item(@PathVariable long itemId, Model model) {
+            Item item = itemRepository.findById(itemId);
+            model.addAttribute("item", item);
+            return "/validation/v4/item";
+        }
+
+        @PostMapping("/add")
+        public String addItem(@Validated @ModelAttribute("item") ItemSaveForm form, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+
+            // 특정 필드 예외가 아닌 전체 예외
+            if (form.getPrice() != null && form.getQuantity() != null) {
+                int resultPrice = form.getPrice() * form.getQuantity();
+                if(resultPrice < 10000) {
+                    bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
+                }
+            }
+
+            if (bindingResult.hasErrors()) {
+                return "/validation/v4/addForm";
+            }
+
+            // 성공 로직
+            Item item = new Item();
+            item.setItemName(form.getItemName());
+            item.setPrice(form.getPrice());
+            item.setQuantity(form.getQuantity());
+
+            Item savedItem = itemRepository.save(item);
+            redirectAttributes.addAttribute("itemId", savedItem.getId());
+            redirectAttributes.addAttribute("status", true);
+            return "redirect:/validation/v4/items/{itemId}";
+        }
+    }
