@@ -127,4 +127,107 @@
                 th:text="#{button.cancel}">취소</>
 
     - 위 addForm.html 코드를 application.properties의 설정 메시지와 #{}를 적용하여 렌더링하게 되면 application.properties의 문자가 나오게 된다.
+
+### 메시지 설정 파일 작성
+    ● properties 설정
+
+      # message.properties
+      label.item.itemName=상품명
+      label.item.price=가격
+      label.item.quantity=수량
+      button.save=저장
+      button.cancel=취소
+
+      # error.properties
+      required.itemName=상품명은 필수 입력 항목입니다.
+      required.price=가격은 필수 입력 항목입니다.
+      range.price=가격은 0 이상이어야 합니다.
+      required.quantity=수량은 필수 입력 항목입니다.
+      range.quantity=수량은 0 이상이어야 합니다.
+      global.error=글로벌 오류가 발생했습니다.
+      totalPriceMin=총 가격은 최소 {0}운 이상이어야 합니다.(현재가격: {1}원)
     
+    ● 스프링 설정 파일 작성
+    # application.properties
+    spring.messages.basename=message, error
+
+    ● Configuration class
+    @Configuration
+    pubilc class WebConfig implements WebMvcConfigurer {
+        @Bean
+        public ResourceBundleMessageSource messageSource() {
+            messageSource.setBasenames("message", "error");
+            messageSource.setDefaultEncoding("UTF-8");
+            return messageSource;
+        }
+    }
+
+    @Controller
+    @RequestMapping("/items")
+    public class ItemController {
+
+        @Autowired
+        private MessageSource messageSource;
+
+        @GetMapping("/new")
+        public String newItemForm(Model model) {
+            return "itemForm";
+        }
+
+        @PostMapping("/save")
+        public String saveItem(
+                               @RequestParam String itemName, 
+                               @RequestParam Integer price,
+                               @RequestParam Integer quantity,
+                               Model model,
+                               Locale locale) {
+
+            if (itemName == null || itemName.isEmpty()) {
+                model.addAttribute("error", messageSource.getMessage("required.itemName", locale));
+                return "itemForm";
+            }
+
+            if (price == null || price <= 0) {
+                model.addAttribute("error", messageSource.getMessage("range.price", locale));
+                return "itemForm";
+            }
+
+            if (quantity == null || quantity <= 0) {
+                model.addAttribute("error", messageSource.getMessage("range.quantity", locale));
+                return "itemForm";
+            }
+
+            // 아이템 저장 로직
+            return "redirect:/items";
+        }
+    }
+
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title th:text="#{page.updateItem}">상품 수정</>
+        <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    </>
+    <body>
+    <div>
+        <h2 th:text="#{page.updateItem}">상품 수정</>
+        <form action="#" th:action="@{/items/save}" th:object="${item}" method="post">
+            <idv th:if="${error}" class="alert alert-danger" th:text="${error}"></>
+            <div>        
+                <label for="itemName" th:text="#{label.item.itemName}">상품명</>
+                <input type="text" id="itemName" th:field="*{itemName}" class="form-control" th:errorclass="field-error">
+                <div class="field-error" th:errors="*{itemName}">상품명 오류</>
+            </>
+            <button type="submit" class="btn btn-primary" th:text="#{button.save}">저장</button>
+            <button type="button" class="btn btn-secondary" onclick="location.href='/items'" th:text="#{button.cancel}">취소</button>
+        </>
+    </>
+
+    1) 메시지 설정 파일 작성  : 'message.properties'와 'error.properties' 파일에 메시지를 정의
+    2) 스프링 설정 파일 작성 : 'application.properties'에서 메시지 소스를 설정
+    3) 글로벌 메시지 설정 : 'WebConfig' 클래스에서 'ResourceBundleMessageSource'를 빈으로 등록
+    4) 메시지 사용
+          1) 컨트롤러에서 사용 : 'messageSource' 빈을 주입받아 메시지를 가져오고, 검증 로직에서 메시지를 사용한다.
+          2) 타임리프 템플릿에서 사용 : 'th:text'와 th:errors'등을 사용하여 메시지를 출력한다.
+
+    - 이와 같은 방식으로 글로벌 메시지와 오류 메시지를 중앙에서 관리하고, 다국어 지원이 가능 하도록 구현할 수 있다.                   
