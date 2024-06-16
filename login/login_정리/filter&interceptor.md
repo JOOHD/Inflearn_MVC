@@ -483,3 +483,96 @@
             resolvers.add(new LoginMemberArgumentsResolver());
         }
     }
+
+### Interceptor - 전처리와 후처리 
+    ● 전처리
+    1) 인증 및 권한 검사
+        - 사용자가 요청을 수행할 권한이 있는지 확인
+          예를 들어, 로그인 여부나 특정 리소스에 대한 접근 권한 검사
+    2) 로그 기록
+        - 요청에 대한 로그를 기록하여 이후에 분석하거나 문제 발생 시 추적할 수 있다. 
+          예를 들어, 요청의 시작 시간, 요청한 URL, 클라이언트 IP 주소 등을 기록할 수 있다.
+    3) 데이터 검증 및 변환
+        - 요청 데이터를 검증하거나 필요한 형식으로 변환
+          예를 들어, 특정 헤더를 투가하거나 세션 초기화를 할 수 있다.
+
+    ● 후처리
+    1) 응답 변환 및 가공
+        - 컨트롤러에서 반환한 데이터를 가공하거나 변환한다. 
+          예를 들어, JSON 응답의 구조를 변경하거나 데이터를 암호화할 수 있다.
+    2) 로그 기록
+        - 요청 처리 중 발생한 예외를 처리하고 사용자에게 적절한 응답을 제공.
+        예를 들어, 특정 예외가 발생했을 때 사용자에게 친화적인 오류 메시지를 보여줄 수 있다.
+    3) 예외 처리
+        - 요청 처리 중 발생한 예외를 처리하고 사용자에게 적절한 응답을 제공한다. 
+        예를 들어, 특정 예외가 발생했을 때 사용자에게 친화적인 오류 메시지를 보여줄 수 있다.
+    4) 자원 해제
+        - 요청 처리 중 사용한 자원을 해제
+        예를 들어, 데이터베이스 연결을 닫거나 파일 핸들을 해제.      
+
+### interceptor - 실제 적용 
+    Interceptor는 'preHandle'에서 시작 시간을 기록하고, 'afterCompletion'에서 요청 처리 시간을 계산하여 로깅한다.
+
+    1) Spring Boot (build.gradle)    
+        dependencies {
+            implementation'orgspringframeworkboot:spring-boot-starter-web'
+            testImplementation'orgspringframeworkboot:spring-boot-starter-test' 
+        }
+
+    2) Interceptor 구현 (전/후처리 적용)
+    @Component
+    public class LoginInterceptor implements HandlerInterceptor {
+        long startTime = System.currentTimeMillis();
+        request.setAttribute("startTime", startTime);
+
+        // 전처리 : 인증 및 권한 검사
+        if (!isUerAuthenticated(request)) {
+            response.sendRedirect("/login");
+            return false;
+        }
+
+        // 전처리 : 요청 로그 기록
+        System.out.println("Request URL : " + request.getRequestURL());
+
+        return true; // 다음 단계로 진행
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        // 후처리 : 추가적인 데이터 변환이나 가공
+        if (modelAndView != null) {
+            modelAndView.addObject("additionalData", "This is some extra data");
+        }
+    }
+
+    @Overried
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        long startTime = (Long) request.getAttribute("startTime");
+        long endTime = System.currentTimeMillis();
+        long executeTime = endTime - startTime;
+
+        // 후처리 : 요청 처리 시간 로깅
+        System.out.println("[" + handler + "] executeTime : " + executeTime + "ms");
+
+        // 후처리 : 자원 해제
+        // exampleResource.close();
+    }
+
+    private boolean isUserAuthenticated(HttpServletRequest request) {
+        // 인증 로직 구현
+        return request.getSession().getAttribute("user") != null;
+    }
+
+    3) Interceptor 등록
+    @Configuration
+    public class Webconfig implements WebMvcConfigurer {
+        @Autowired
+        private LogInterceptor logInterceptor;
+
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(logInterceptor)
+                    .addPathPatterns("/"") // 모든 경로에 대해 Interceptor를 적용
+                    .excludePathPatterns("/resources/**", "/static/**", "public/**") // 특정 경로 제외
+        }
+    }                 
