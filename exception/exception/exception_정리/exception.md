@@ -220,6 +220,52 @@
             3) WAS 오류 페이지 확인
             4) WAS(/error-page/500, dipatchType=ERROR) -> 필터(x) -> 서블릿 -> 인터셉터(x) -> 컨트롤러(/error-page/500) -> View
 
+### RequestURI() 메서드 종류
+    1) 로그 및 모니터링
+    @Override
+    public boolean preHandle(HttpServletRequest requset, HttpServletResponse response, Object handle) throws Exception {
+        String requestURI = request.getRequestURI();
+        system.out.println("Request URI : " + requestURI);
+
+    }
+
+    2) 인증 및 권한 부여
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handle) throw Exception {
+        String requestURI = request.getRequestURI();
+        if (!hasPermission(requestURI)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Your don't haver permission to access this resource.")'
+        }
+        return true;
+    }
+
+    private boolean hasPermission(String requestURI) {
+        return true;
+    }
+
+    3) 비지니스 로직 처리
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handle) throw Exception {
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/admin")) {
+            // Perform specific logic for admin pages
+        }  else {
+            // Perform logic for other pages
+        }   
+        return true;
+    }
+
+    4) 리다이렉트 및 포워딩
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handle) throws Exception {
+        String requestURI = request.getRequestURI();
+        if ("/old-page".equals(requestURI)) {
+            response.sendRedirect("/new-page");
+            return false
+        }
+        return true;
+    }
+
 ### 스프링 부트 - 오류 페이지1
         - 지금까지 예외 처리 페이지를 만들기 위해서 다음과 같은 복잡한 과정을 거쳤다.
           - WebServerCustomizer를 만들고
