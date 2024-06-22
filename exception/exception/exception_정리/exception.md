@@ -266,6 +266,45 @@
         return true;
     }
 
+    - getRequestURI() 메서드를 통해 URI를 가져오는 작업은 웹 애플리케이션에서 매우 중요한 역할을 한다.
+    
+    ● WAS의 역할 (참고)
+    - WAS는 동적인 웹 콘텐츠를 생성하고 제공하는 서버를 뜻한다.
+    1) 서블릿 실행 : 웹 애플리케이션에서 서블릿을 실행하고, 서블릿의 생명주기를 관리
+    2) JSP 처리 : JSP 파일을 컴파일하고 실행하여 동적인 웹 페이지를 생성한다.
+    3) 요청/응답 처리 : 클라이언트로부터의 HTTP 요청을 받아 적절한 서블릿이나 JSP로 전달하고, 생성된 응답을 클라이언트에게 전송합니다.
+    4) 세션 관리 : 사용자의 세션을 관리하여 지속적인 사용자 상태 정보를 유지.
+    5) 보안 : 인증 및 권한 부여 등을 통해 웹 애플리케이션의 보안을 관리.
+    6) 트랜잭션 관리 : 트랜잭션을 관리하여 데이터베이스 연사의 일관성과 무결성을 유지.
+    
+    ● 예외 처리 흐름
+    - 애플리케이션 레벨 : 웹 애플리케이션 코드 내에서 예외가 발생하면 이를 처리하기 위해 try ~ catch 블록을 사용하거나, 예외 처리기를 구현할 수 있다.
+    - 서블릿 컨테이너 레벨 : 서블릿이나 JSP에서 예외가 발생하면 서블릿 컨테이너(WAS)가 이를 감지하고, 설정된 오류 페이지나 기본 오류 페이지로 리다이렉션 할 수 있다.
+    - WAS 레벨 : 서블릿 컨테이너에서 처리되지 않은 예외가 발생하면 WAS는 이를 HTTP 상태 코드 500 (Internal Server Error)으로 처리하여 클라이언트에 반환.
+
+    ● 서블릿 코드에서의 예외 처리
+    @WebServlet("/example")
+    public class ExampleServlet extends HttpServlet {
+        @Override
+        protected void doGet(HttpServletRequest request, HttpServletResponse response) throw Exception {
+            try {
+                // 비즈니스 로직 실행
+            } catch (Exception e) {
+                // 예외 처리
+                request.setAttribute("errorMessage", e.getMessage());
+                request.getRequestDispatcher("/errorPage.jsp").forward(Request, response);
+            }
+        }
+    }
+
+    ● web.xml에서의 예외 처리 설정
+    <error-page>
+        <error-code>500</>
+        <location>/serverError.jsp</>
+    </>
+    위 예시는 웹 애플리케이션에서 예외가 발생했을 때 이를 처리하는 방법을 보여준다. 예외가 애플리케이션 코드 내에서 처리되지 않으면 WAS가 예외를 감지하고, 설정된 오류 페이지로 리다이렉션하거나 기본적으로 HTTP 상태 코드 500을 반환하여 클라이언트에게 알린다.    
+
+
 ### 스프링 부트 - 오류 페이지1
         - 지금까지 예외 처리 페이지를 만들기 위해서 다음과 같은 복잡한 과정을 거쳤다.
           - WebServerCustomizer를 만들고
