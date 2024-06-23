@@ -8,6 +8,74 @@
     웹 애플리케이션은 사용자 요청별로 별도의 쓰레드가 할당되고, 서블릿 컨테이너 안에서 실행된다. 애플리케이션에서 예외가 발생했는데, 어디선가 try ~ catch로 예외를 잡아서 처리하면 아무런 문제가 없다.
     그런데 만약에 애플리케이션에서 예외를 잡지 못하고, 서블릿 밖으로 까지 예외가 전달되면 어떻게 동작할까?
 
+        ● 사용 기준
+        1) 예외 발생 가능성 : 예외가 발생할 가능성이 있는 코드에서 사용
+        예를 들어, 파일 입출력, 데이터베이스 연결, 네트워크 통신, 형변환, 배열 인덱스 접근 등..
+        2) 비즈니스 로직의 일관성 유지 : 예외가 발생해도 비즈니스 로직이 올바르게 처리되어야 할 때 사용된다. 예외를 처리하여 로직의 흐름을 유지하고, 데이터 일관성을 보장한다.
+        3) 사용자 친화적인 에러 처리 : 사용자에게 친화적인 에러 메시지를 제공하거나, 특정 예외 상황에서 적절한 대응.
+        4) 자원 해제 : 예외가 발생해도 자원을 적절히 해제해야 할 때 사용된다.
+        예를 들어, 파일, 데이터베이스 연결 네트워크 소켓 등..
+        5) 로깅 및 디버깅 : 예외 정보를 로깅하여 문제를 진단하고, 디버깅에 활용할 때 사용된다.
+     
+        ● 예제 코드 (파일 입출력 예제)
+        public void readFile(String filePath) {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(filePath));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    system.out.println(line);
+                }
+            } catch (FileNotFoundException e) {
+                System.err.println("File not found : " + filePath);
+            } catch (IOException e) {
+                System.err.println("Error reading file : " + e.getMessage());
+            } finally {
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error closing reader : " + e.getMessage());
+                }
+            }
+        }
+
+        ● 에제 코드 (데이터베이스 연결)
+        public void fetchData() {
+            Connection conn = null;
+            PreparedStatement stmt = null;
+            Result rs = null;
+            try {
+                conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                stmt = conn.prepareStatement("SELECT * FROM my_table");
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    System.out.println("Data : " + rs.getString("data_column"))'
+                }
+            } catch (SQLException e) {
+                System.out.println("Database error : " + e.getMessage());
+            } finally {
+                try {
+                    if (rs != null) rs.close();
+                    if (stmt != null) stmt.close();
+                    if (conn != null) conn.close();
+                } catch (SQLException e) {
+                    System.out.println(Error closing resources : " + e.getMessage());
+                }
+            }
+        }
+
+        ● 사용자 입력 예제
+        public void parseInput(String input) {
+            try {
+                int number = Integer.parseInt(input);
+                System.out.println("Parsed number : " + number);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number format : " + input);
+            }
+        }
+
     ● 예외 발생 흐름
     - WAS(여기까지 전파) <- 필터 <- 서블릿 <- 인터셉터 <- 컨트롤러(예외발생)
 
