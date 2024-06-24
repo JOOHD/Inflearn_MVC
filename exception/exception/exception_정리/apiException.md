@@ -723,3 +723,142 @@
     @ControllerAdvice(assignableTypes = {ControllerInterface.class,
     AbstractController.class})
     public class ExampleAdivce3 {}
+
+### blog project apiException - 적용
+    ● ExceptionHandler (Subject - cafe)
+    @RestControllerAdvice
+    @Slf4j
+    public class ExceptionHandler {
+
+        // 컨트롤러 DTO validation 핸들러 
+        @org.springframework.web.bind.annotation.ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<MethodInvalidResponse> methodInvalidException(final MethodArgumentNotValidException e) 
+        {
+
+            BindingResult bindingResult = e.getBindingResult();
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(MethodInvalidResponse.builder()
+                        .errorCode(bindingResult.getFieldErrors().get(0).getCode())
+                        .errorMessage(bindingResult.getFieldErrors().get(0).getDefaultMessage())
+                        .build());
+
+        }
+
+        // 컨트롤러 @PathVariable TypeMismatch 핸들러 
+        @org.springframework.web.bind.annotation.ExceptionHandler(MethodArgumentTypeMismatchException.class)
+        public ResponseEntity<ExceptionResponse> methodArgumentTypeMismatchException() {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ExceptionResponse.builder()
+                        .errorCode(METHOD_ARGUMENT_TYPE_MISMATCH)
+                        .errorMessage(METHOD_ARGUMENT_TYPE_MISMATCH.getMessage())
+                        .build()
+                    );
+        }
+
+        // CustomException 핸들러
+        @org.springframework.web.bind.annotation.ExceptionHandler(CustomException.class)
+        public ResponseEntity<ExceptionResponse> customRequestException(final CustomException c) {
+            log.error("Api Exception => {}, {}", cc.getErrorCode(), c.getErrorMessage());
+            return ResponseEntity
+                    .status(c.getErrorStatus())
+                    .body(ExceptionResponse.builder()
+                        .errorCode(c.getErrorCode())
+                        .errorMessage(c.getErrorMessage())
+                        .build()
+                    );
+        }
+
+        @Getter
+        @Builder
+        public static class MethodInvalidResponse {
+
+            private String errorCode;
+            private String errorMessage;
+        }
+
+        @Getter
+        @Builder
+        public static class ExceptionResponse {
+
+            private ErrorCode errorCode;
+            private String errorMessage;
+        }
+    }
+
+    ● 정리
+    Restful API에서 발생하는 예외를 처리하기 위한 전역 예외 처리 핸들러를 정의한 코드입니다. @RestControllerAdvice 와 @ExceptionHandler 어노테이션을 사용하여 다양한 예외 상황에 대해 적절한 HTTP 응답을 반환.
+
+    ● methodInvalidException method
+        1) 클래스 및 어노테이션 설명
+        - @RestControllerAdvice : 모든 @RestController에서 발생하는 예외를 처리하는 클래스. Spring MVC의 @ControllerAdvice와 유사하지만, REST API를 위한 예외 처리를 지원합니다.
+
+        2) MethodArgumentNotValidException 처리
+        - MethodArgumentNotValidException : Spring에서 요청 바디의 @Valid 검증이 실패했을 때 발생하는 예외이다.
+        - BindingResult : 검증 실패 결과를 담고 있는 객체
+        - ResponseEntity : HTTP 응답을 나타내는 객체로, 상태 코드와 응답 본문을 포함
+        - MethodInvalidResponse : 에러 코드와 메시지를 포함하는 커스텀 응답 객체
+        
+        이 핸들러는 @Valid 검증 실패 시 발생하는 MethodArgumentValidException 을 처리하여, HTTP 400 상태 코드와 함께 검증 오류 메시지를 반환한다.
+
+        3) @ResponseEntity annotation
+        Spring Framework에서 HTTP 응답을 표현하는 객체이다. 
+        이를 사용하여 Statau, Header, Response 본문 등을 설정할 수 있다.
+        ResponseEntity를 구성하는 각 메서드의 목적과 동작 방식은 다음과 같다.
+
+            1) ResponseEntity.Status(HttpStatus status) : 응답의 상태코드
+            - 목적 : HTTP 응답의 상태 코드를 설정
+            - 동작 : 응답 객체의 상태 코드를 설정하는 빌더를 반환
+            - ex)
+                    ResponseEntity.status(HttpStatus.BAD_REQUEST)
+
+            2) ResponseEntity.body(Object body) : 응답의 본문            
+            - 목적 : HTTP 응답의 본문(body)을 설정
+            - 동작 : 응답 객체의 본문을 설정하고, 이를 포함한 ResponseEntity를 반환
+            - ex)
+                    ResponseEnitty.status(HttpStatus.BAD_REQUEST)
+                            .body(new ErrorResponse("error_code", "error_message"))
+
+            3) ErrorResponse.builder() : 빌더 패턴을 사용하여 객체 생성
+            - 목적 : 빌더 패턴을 사용하여 ErrorResponse 객체를 생성.
+            - 동작 : ErrorResponse 객체를 단계별로 설정할 수 있는 빌더 객체를 반환.
+            - ex)
+                    ErrorResponse.builder()
+
+            4) errorCode(String errorCode) : 응답 객체의 필드를 설정
+            - 목적 : ErrorResponse 객체의 errorCode 필드를 설정
+            - 동작 : errorCode 필드를 설정하고, 빌더 객체를 반환
+            - ex)   
+                    ErrorResponse.builder()
+                            .errorCode("error_code")
+
+            5) errorMessage(String errorMessage) : 응답 객체의 필드를 설정
+            - 목적 : ErrorResponse 객체의 errorMessage 필드를 설정
+            - 동작 : errorMessage 필드를 설정하고, 빌더 객체를 반환
+            - ex)
+                    ErrorResponse.builder()
+                            .errorCode("error_code")
+                            .errorMessage("error_message")                            
+
+            6) .build() : 최종 객체를 생성
+            - 목적 : 빌더 객체에 설정된 값들을 사용하여 최종 ErrorResponse 객체를 생성
+            - 동작 : 설정된 값들을 포함하는 ErrorResponse 객체를 반환
+            - ex)
+                    ErrorResponse errorResponse = ErrorResponse.builder()
+                            .errorCode("error_code")
+                            .errorMessage("error_message")
+                            .build();                                                              
+    
+    ● MethodArgumentTypeMismatchException method
+        4) MethodArgumentTypeMismatchException : 요청 경로 변수의 타입이 일치하지 않을 때 발생하는 예외.
+        5) ExceptionResponse : 에러 코드와 메시지를 포함하는 커스텀 응답 객체.
+
+        이 핸들러는 경로 변수 타입 불일치 시 발생하는 예외를 처리하여, HTTP 400 상태 코드와 함께 오류 메시지를 반환.
+
+    ● CustomException method
+        6) CustomException : 애플리케이션에서 정의한 커스텀 예외
+        7) log.error : 예외 발생 시 에러 메시지를 로그에 기록
+        8) c.getErrorStatus() : 커스텀 예외에 정의된 상태 코드를 반환
+
+        이 핸들러는 애플리케이션에서 발생하는 커스텀 예외를 처리하여, 해당 예외에 정의된 HTTP 상태 코드와 함께 오류 메시지를 반환한다.
