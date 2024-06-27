@@ -365,3 +365,123 @@
       - th:field가 자동으로 컨버전 서비스를 적용해주어서 ${{ipPort}} 처럼 적용이 되었다. 따라서 IpPort -> String으로 변환
     - POST / converter/edit
       - @ModelAttribute를 사용해서 String -> IpPort로 변환된다.
+
+### Formatter
+    converter는 입력과 출력 타입에 제한이 없는, 범용 타입 변환 기능을 제공한다. 이번에는 일반적인 웹 애플리케이션 환경을 생각해보자, 불린 타입을 숫자로 바꾸는 것 같은 범용 기능 보다는 개발자 입장에서는 문자를 다른 타입으로 변환하거나, 다른 타입을 문자로 변환하는 상황이 대부분이다.
+    앞서 살펴본 예제들을 떠올려 보면 문자를 다른 객체로 변환하거나 객체를 문자로 변환하는 일이 대부분이다.
+
+    ● 웹 어플리케이션에서 객체를 문자로, 문자를 객체로 변환하는 예
+    - 화면에 숫자를 출력해야 하는데, Integer -> String 출력 시점에 숫자 1000 -> 문자 "1,000" 이렇게 1000 단위에 쉼표를 넣어서 출력하거나, 또는 "1,000"라는 문자를 1000이라는 숫자로 변경해야 한다.
+    - 날짜 객체를 문자인 "2024-06-27"와 같이 출력하거나 또는 그 반대의 상황
+
+    이렇게 객체를 특정한 포멧에 맞추어 문자로 출력하거나 또는 그 반대의 역할을 하는 것에 특화된 기능이 formatter이다.
+
+    ● Formatter interface
+    public interface Printer<T> {
+        String pritn(T object, Locale locale);
+    }
+
+    public interface Parser<T> {
+        T parse(String text, Locale locale) throws ParseException;
+    }
+
+    public interface Formatter<T> extends Printer<T>, Parser<T> {
+
+    }
+
+    ● MyNumberFormatter
+    @Slf4j
+    public class MyNumberFormatter implements Formatter<Number> {
+
+        @Override
+        public Number parse(String text, Locale locale) throws ParseException {
+            log.info("text={}, locale=", text, locale);
+            NumberFormat format = NumberFormat.getInstance(locale);
+            return format.parse(text);
+        }
+
+        @Override
+        public String print(Number object, Locale locale) {
+            log.info("object={}, locale={}", object, locale);
+            return NumberFormat.getInstance(locale).format(object);
+        }
+
+        @Test
+        void parse() throws ParseException {
+            Number result = formatter.parse("1,000", Locale.KOREA);
+            assertThat(result).isEqualTo(1000L);
+        }
+
+        @Test
+        void print() {
+            String result = formatter.print(1000, Locale.KOREA);
+            assertThat(result).isEqualTo("1,000");
+        }
+    }
+    - "1,000"처럼 숫자 중간의 쉼표를 적용하려면 자바가 기본으로 제공하는 NumberFormat 객체를 사용하면 된다. 
+    - parse() : 문자 -> 숫자 (Number 타입은 Integer, Long)과 같은 숫자 타입의 부모 클래스이다.
+    - print() : 객체 -> 문자
+
+### 스프링이 제공하는 기본 포맷터
+    IDE에서 Formatter 인터페이스의 구현 클래스를 찾아보면 수 많은 날짜나 시간 관련 포맷터가 제공되는 것을 확인할 수 있다.
+    그런데 포맷터는 기본 형식이 지정되어 있기 때문에, 객체의 각 필드마다 다른 형식으로 포맷을 지정하기는 어렵다.
+
+    스프링은 이런 문제를 해결하기 위해 어노테이션 기반으로 형식을 지정해서 사용할 수 있는 매우 유용한 포맷터 두 가지를 기본으로 제공한다.
+
+    - @NumberFormat : 숫자 관련 형식 지정 포맷터 사용
+    - @DataTimeFormat : 날짜 관련 형식 지정 포맨터 사용
+
+    ● FormatterController
+    @Controller
+    public class FormatterController {
+
+        @GetMapping("/formatter/edit")
+        public Strign formatterForm(Model model){
+            Form form = new ~~
+            form.setNumber(10000);
+            form..setLocalDateTime(LocaleDateTime.now());
+
+            model.addAttribute("form", form);
+            return "formatter-form";
+        }
+
+        @PostMapping("/formatter/edit")
+        public String formatterEdit(@ModelAttribute Form form) {
+            return "formatter-view";
+        }
+
+        @Data
+        static class Form {
+            
+            @NumberForm(pattern = "###,###")
+            private Integer number;
+
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            private LocalDateTime localDateTime;
+        }
+    }
+
+    ● templates/formatter-form.html
+    <form th:object="${form}" th:method="post">
+        number <input type="text" th:field="*{number}">
+        localDateTime <input type="text" th:field="*{localDateTime}">
+
+    ● templates/formatter-view.html
+    <ul>
+        <li>${form.number}: <span th:text="${form.number}">
+        <li>${{form.number}}: <span th:text="${{form.number}}"> 
+        <li>${form.localDateTime}: <span th:text="${form.localDateTime}" > 
+        <li>${{form.localDateTime}}: <span th:text="${{form.localDateTime}}" >  
+
+    ● 결과
+    - ${form.number} : 10000
+    - ${{form.number}} : 10,000
+    - ${form.localDateTime} : 2024-06-27T00:00:00
+    - ${{form.localeDateTime}} : 2024-06-27 00:00:00
+
+    ● 정리
+    메시지 컨버터(HttpMessageConverter)에는 컨버전 서비스가 적용되지 않는다.
+    특히 객체를 JSON으로 변환할 때 메시지 컨버터를 사용하면서 이 부분을 많이 오해하는데, HttpMessageConverter의 역할은 HTTP 메시지 바디의 내용을 객체로 변환하거나 객체를 HTTP 메시지 바디에 입력하는 것이다.
+    예를 들어서 JSON을 객체로 변환하는 메시지 컨버터는 내부에서 Jackson 같은 라이브러리를 사용한다. 객체를 JSON으로 변환한다면 그 결과는 이 라이브러리에 달린 것이다. 따라서 JSON 결과로 만들어지는 숫자나 날짜 포멧을 변경하고 싶으면 해당 라이브러리가 제공하는 설정을 통해서 포맷을 지정해야 한다. 결과적으로 이것은 컨버전 서비스와 전혀 관계가 없다.
+
+    컨버전 서비스는 @RequestParam, @ModelAttribute, @PathVariable 뷰 템플릿 등에서 사용할 수 있따.
