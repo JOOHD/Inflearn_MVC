@@ -105,7 +105,7 @@
     @RequestMapping("/servlet/v2)
     public class ServletUploadControllerV2 {
 
-        @Value("${file.dir}")
+        @Value("${file.dir}") // application.properties 파일에 설정한 file.dir(파일 경로)
         private String fileDir;
 
         @GetMapping("/upload")
@@ -144,8 +144,263 @@
             return "upload-form";
         }
     }
-    질문
-    1. MAP<?,?> 타입이 아닌 Key, value 형태를 가진 파라미터 ?
-        inputStream, StandardCharset.UTF_8
+    - multipart 형식은 전송 데이터를 하나하나 각각 부분(part)으로 나누어 전송한다. parts에는 이렇게 나누어진 데이터가 각각 담긴다.
+    - 
+    - 서블릿이 제공하는 Part는 멀티파트 형식을 편리하게 읽을 수 있는 다양한 메서드를 제공한다.
+        
+    ● Part 주요 메서드
+    part.getSubmittedFileName() : 클라이언트가 전달한 파일명
+    part.getInputStream() : Part의 전송 데이터를 읽을 수 있따.
+    part.write(...) : Part를 통해 전송된 데이터를 저장할 수 있다.
 
-    2. Collection<Part> 제네릭의 사용?
+    ● 실행 : http://localhost:8080/servlet/v2/upload
+    - 다음 내용을 전송
+      - itemName : 상품A
+      - file : 스크린샷.png
+
+    ● 결과 로그
+    === PART === 
+    name = itemName
+    header content-disposition : form-data; name = "itemName"
+    submittedFileName = null  
+    size = 7
+    body = 상품A
+    === PART ===
+    name = file
+    header content-disposition : form-data; name = "file"; filename = "스크린샷.png"
+    header content-type : image/png
+    submittedFileName = 스크린샷.png
+    size = 112384
+    body = qwlkjekzijlese.....
+    파일 저장 fulPath = /Users/joo/study/file/스크린샷.png
+
+    ● 정리
+    서블릿이 제공하는 Part는 편하기는 하지만, HttpServletRequest를 사용해야 하고, 추가로 파일 부분만 구분하려면 여러가지 코드를 넣어야 한다. 이번에는 스프링이 이 부분을 얼마나 편리하게 제공하는지 확인해보자.
+
+### Spring fileupload
+    스프링은 MultipartFile 이라는 인터페이스로 멀티파트 파일을 매우 편리하게 지원한다.
+
+    @Slf4j
+    @Controller
+    @RequestMapping("/Spring")    
+    public class SpringUploadController {
+
+        @Value("${file.dir}")
+        private String fileDir;
+
+        @GetMapping("/upload")
+        public Strign newFile() {
+            return "upload-form";
+        }
+
+        @PostMapping("/upload")
+        public String saveFile(@RequestParam String itemName,
+                               @RequestParam MultipartFile file, HttpServletRequest request) throws IOException {
+                                
+            log.info("request={}", request);
+            log.info("itemName={}", itemName);
+            log.info("multipartFile={}", file);
+
+            if (!file.isEmpty()) {
+                String fullPath = fileDir + file.getOriginalFilename();
+                log.info("파일 저장 fullPath={}", fullPath);
+                file.transferTo(new File(fullPath));
+            }
+
+            return "upload-form";
+        }
+    }
+    - @RequestParam MultipartFile file
+    업로드하는 HTML Form의 name에 맞추어 @RequestParam을 적용하면 된다.
+    추가로 @ModelAttribute에서도 MultipartFile을 동일하게 사용할 수 있다.
+
+    ● MultiPartFile 주요 메서드
+    file.getOriginalFilename() : 업로드 파일 명
+    file.transferTo(...) : 파일 저장
+
+    ● 실행 : http://localhost:8080/spring/upload
+    
+    ● 실행 로그
+    request = org.springframework.web.multipart.support.StandardMultipartHttpServletRequest@5c022dc6
+    itemName = 상품A
+    multipartFile = org.springframework.web.mulipart.support.StandardMultipartHttpServletRequest$StandardMulipartFile@274BA730
+    파일 저장 fulPath = /Users/joo/study/file/스크린샷.png
+
+### 예제로 구현하는 파일 업로드, 다운로드
+    ● 요구사항
+    - 상품을 관리
+      - 상품 이름
+      - 첨부파일 하나
+      - 이미지 파일 여러개
+    - 첨부파일을 업로드 다운로드 할 수 있다.
+    - 업로드한 이미지를 웹 브라우저에서 확인할 수 있다.
+
+    ● Item - 상품 도메인
+    @Data
+    public class Item {
+        private Long id;
+        private String itemName;
+        private UploadFile attachFile;
+        private List<UploadFile> imageFiles;
+    }    
+
+    ● ItemRepository - 상품 리포지토리
+    @Repository
+    public class ItemRepository {
+
+        private final Map<Long, Item> store = new HashMap<>();
+        private long sequence = 0L;
+
+        public Item save(Item item) {
+            item.setId(++sequence);
+            store.put(item.getId(), item);
+            return item;
+        }
+
+        public Item findById(Long id) {
+            return store.get(id);
+        }
+    }
+
+    ● UploadFile - 업로드 파일 정보 보관
+    @Data
+    public class UploadFile {
+
+        private String uploadFileName;  // 고객이 업로드한 파일명
+        private String storeFileName;   // 서버 내부에서 관리하는 파일명
+
+        public UploadFile(String uploadFileName, String storeFileName) {
+            this.uploadFileName = uploadFileName;
+            this.storeFileName = storeFileName;
+        }
+    }
+    - 고객이 업로드한 파일명으로 서버 내부에 파일을 저장하면 안된다. 왜냐하면 서로 다른 고객이 같은 파일이름을 업로드 하는 경우 기존 파일 이름과 충돌이 날 수 있다. 서버에서는 저장할 파일명이 겹치지 않도록 내부에서 관리하는 별도의 파일명이 필요하다.
+
+### FileStore - 파일 저장과 관련된 업무 처리
+    @Component
+    public class FileStore {
+
+        @Value("${file.dir}")
+        private String fileDir;
+
+        public String getFullPath(String filename) {
+            return fileDir + filename;
+        }
+
+        public List<UploadFile> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
+            List<UploadFile> storeFileResult = new ArrayList<>();
+            for (MulipartFile multipartFile : multipartFiles) {
+                if (!multipartFile.isEmpty()) {
+                    storeFileResult.add(storeFile(multipartFile));
+                }
+            }
+            return storeFileResult;
+        }
+
+        public UploadFile storeFile(MultipartFile multipartFile) throws IOException {
+            if (multipartFile.isEmpty()) {
+                return null;
+            }
+
+            String originalFilename = multipartFile.getOriginalFiilename();
+            String storeFileName = createStoreFileName(originalFilename);
+            multipartFile.transferTo(new File(getFulPath(storeFilename)));
+            return new UploadFile(originalFilename, storeFileName);
+        }
+
+        private String createStoreFileName(String originalFilename) {
+            String ext = extracExt(originalFilename);
+            String uuid = UUID.randomUUID().toString();
+            return uuid + "." + ext;
+        }
+
+        private String extractExt(String originalFilename) {
+            int pos = originalFilename.lastIndexOf(".");
+            return originalFilename.substring(pos + 1);
+        }
+    } 
+
+    ● 멀티파트 파일을 서버에 저장하는 역할을 담당한다.  
+    - createStoreFileName() : 서버 내부에서 관리하는 파일명은 유일한 이름을 생성하는 UUID를 사용해서 충돌하지 않도록 한다.
+    - extractExt() : 확장자를 별도로 추출해서 서버 내부에서 관리하는 파일명에도 붍여준다. 예를 들어서 고객이 a.png라는 이름으로 업로드 하면
+    5104c62-86c4-4274...png 와 같이 저장된다.
+
+    ● ItemForm
+    @Data
+    public class ItemForm {
+        private Long itemId;
+        private String itemName;
+        private List<MultipartFile> imageFiles;
+        private MultipartFile attchFile;
+    }
+    - List<MultipartFile> imageFiles : 이미지를 다중 업로드 하기 위해 MultipartFile를 사용했다. 
+    - MultipartFile attachFile : 멀티파트는 @ModelAttribute에서 사용할 수 있다.
+
+    ● ItemController
+    @Slf4j
+    @Controller
+    @RequiredArgConstructor
+    public class ItemController {
+
+        private final ItemRepository itemRepository;
+        private final FileStore fileStore;
+ 
+        @GetMapping("/items/new")
+        public String newItem(@ModelAttribute ItemForm form) {
+            return "item-form";
+        }
+
+        @PostMapping("/items/new")
+        public String saveItem(@ModelAttribute ItemForm form, RedirectAttributes redirectAttributes) throws IOException {
+
+            UploadFile attachFile = fileStore.storeFile(form.getAttachFile());
+            List<UploadFile> storeImageFiles = fileStore.storeFiles(form.getImageFiles());
+
+            // 데이터베이스에 저장
+            Item item = new Item();
+            item.setItemName(form.getItemName());
+            item.setAttachFile(attachFile);
+            item.setImageFiles(storeImageFiles);
+            itemRepository.save(item);
+
+            redirectAttribute.addAttribute("itemId", item.getId());
+
+            return "redirect:/item/{itemId}";
+        }
+
+        @GetMapping("/Items/{id}")
+        public String items(@PathVariable Long id, Model model) {
+            Item item = itemRepository.findById(id);
+            model.addAttribute("item", itme);
+            return "item-view";
+        }
+
+        @ResponseBody
+        @GetMapping("/images/{filename}")
+        public Resource downloadImage(@PathVariable String filename) throws MalformedURLException {
+            return new UrlResource("file:" + fileStore.getFullPath(filename));
+        }
+
+        @GetMapping("/attach/{itemId}")
+        public ResponseEntity<Resource> downloadAttach(@PathVariable Long itemId) throws MalformedURLException {
+            Item itme = itemRepository.findById(itemId);
+            String storeFileName = item.getAttachFile().getStoreFileName();
+            String uploadFileName = item.getAttachFile().getUploadFileName();
+
+            UrlResource resource = new UrlResource("file:" + fileStore.getFullPath(storeFileName));
+
+            log.info("uploadFileName={}", uploadFileName);
+
+            String encodedUploadFileName = UrlUtils.encode(uploadFileName, StandardCharsets.UTF_8);
+            String contentDisposition = "attachment; filename=\"" + encodedUploadFileName + "\"";
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                        .body(resource);
+        }
+    }
+    - @PostMapping("/items/new") : 폼의 데이터를 저장하고 보여주는 화면으로 리다이렉트 한다.
+    - @GetMapping("/images/{filename}") : <img> 태그로 이미지를 조회할 때 사용한다. UrlResource로 이미지 파일을 읽어서 @ResponseBody로 이미지 바이너리를 반환한다.
+    - @GetMapping("/attach/{itemId}") : 파일을 다운로드 할 때 실행한다. 예제를 더 단순화 할 수 있지만, 파일 다운로드 시 권한 체크같은 복잡한 상황까지 가정한다. 생각하고 이미지 id를 요청하도록 했다. 파일 다운로드시에는 고객이 업로드한 파일 이름으로 다운로드 하는게 좋다.
+    이때는 Content-disposition 헤더에 attachment; filename="업로드 파일명" 값을 주면 된다. 
+
+    
