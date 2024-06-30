@@ -383,7 +383,7 @@
 
         @GetMapping("/attach/{itemId}")
         public ResponseEntity<Resource> downloadAttach(@PathVariable Long itemId) throws MalformedURLException {
-            Item itme = itemRepository.findById(itemId);
+            Item item = itemRepository.findById(itemId);
             String storeFileName = item.getAttachFile().getStoreFileName();
             String uploadFileName = item.getAttachFile().getUploadFileName();
 
@@ -402,5 +402,27 @@
     - @GetMapping("/images/{filename}") : <img> 태그로 이미지를 조회할 때 사용한다. UrlResource로 이미지 파일을 읽어서 @ResponseBody로 이미지 바이너리를 반환한다.
     - @GetMapping("/attach/{itemId}") : 파일을 다운로드 할 때 실행한다. 예제를 더 단순화 할 수 있지만, 파일 다운로드 시 권한 체크같은 복잡한 상황까지 가정한다. 생각하고 이미지 id를 요청하도록 했다. 파일 다운로드시에는 고객이 업로드한 파일 이름으로 다운로드 하는게 좋다.
     이때는 Content-disposition 헤더에 attachment; filename="업로드 파일명" 값을 주면 된다. 
+
+    ● item-form.html(상품 등록)
+    <form th:action method="post" enctype="multipart/form-data">
+        <ul>
+            <li>상품명 <input type="text" name="itemName"></>
+            <li>첨부파일 <input type="file" name="attachFile"></>
+            <li>이미지 파일 <input type="file" multipart="multipart" name="imageFiles"></>
+        </>
+    </>
+    - 다중 파일 업로드를 하려면 multipart="multipart" 옵션을 주면 된다.
+    - ItemForm의 다음 코드에서 여러 이미지 파일을 받을 수 있다.
+    - private List<MultipartFile> imageFiles;
+
+    ● item-view.html(상품 조회)
+    상품명 : <span th:text="${item.itemName}">상품명</span>
+    첨부파일 : <a th:if=${item.attachFile}" 
+                th:href="|/attach/${item.id}|" 
+                th:text="${item.getAttachFile().getUploadFileName()}" />
+                <img th:each="imageFile : ${item.imageFiles}"
+                th:src="|/images/${imageFile.getSoreFileName()}" width="300" height="300"/>
+
+    - 첨부 파일은 링크로 걸어두고, 이미지는 <img> 태그를 반복해서 출력한다.                         
 
     
