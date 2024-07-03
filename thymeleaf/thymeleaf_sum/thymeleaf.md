@@ -273,7 +273,7 @@
             일반 배송
             느린 배송
             셀렉트 박스로 하나만 선택할 수 있다.       
-![requestDetail](/./thymeleaf/thymeleaf_img/requestDetail.png)  
+![requestDetail](../thymeleaf_img/requestDetail.png)  
 
     ● itemType - 상품 종류
 

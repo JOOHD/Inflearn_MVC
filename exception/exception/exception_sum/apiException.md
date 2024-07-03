@@ -190,9 +190,9 @@
 
     스프링 MVC는 컨트롤러(핸들러) 밖으로 예외가 던저진 경우 예외를 해결하고 동작을 새로 정의할 수 있는 방법을 제공한다. 컨트롤러 밖으로 던져진 예외를 해결하고, 동작 방식을 변경하고 싶으면 HandlerExceptionResolver를 사용하면 된다. 줄여서 ExceptionResolver라 한다.        
 
-![ExceptionResolver_Before](./exception/exception_img/ExceptionResolver_Before.png)
+![ExceptionResolver_Before](../exception_img/ExceptionResolver_Before.png)
 
-![ExceptionResolver_After](./exception/exception_img/ExceptionResolver_After.png)
+![ExceptionResolver_After](../exception_img/ExceptionResolver_After.png)
 
     ● 참고 : ExceptionResolver로 예외를 해결해도 postHandle()은 호출되지 않는다. 
 

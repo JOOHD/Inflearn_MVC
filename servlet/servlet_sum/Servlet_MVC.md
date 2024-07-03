@@ -234,7 +234,7 @@
     View : model에 담겨있는 데이터를 사용해서 화면을 그리는 일에 집중.(HTML 생성.)
 
 ### MVC패턴2
-![MVC2_pattern](./servlet_img/mvc2.png)  
+![MVC2_pattern](../servlet_img/mvc2.png)  
 
 ### MvcMemberFormServlet (mvc패턴)
     public class MvcMemberFormServlet extends HttpServlet {

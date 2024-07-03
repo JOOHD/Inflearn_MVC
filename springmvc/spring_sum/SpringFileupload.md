@@ -7,7 +7,7 @@
     - application/x-www-form-urlencoded
     - multipart/form-data
    
-![FORM_urlencoded](./springmvc/spring_img/FORM_urlencoded.png)
+![FORM_urlencoded](../spring_img/FORM_urlencoded.png)
 
     - application/x-www-form-urlencoded 방식은 HTML 폼 데이터를 서버로 전송하는 가장 기본적인 방법이다. Form 태그에 별도의 enctype 옵션이 없으면 웹 브라우저는 요청 HTTP 메시지의 헤더에 다음 내용을 추가한다.
      
@@ -23,7 +23,7 @@
 
       이 문제를 해결하기 위해 HTTP는 multipart/form-data라는 전송 방식을 제공한다.
 
-![FORM_multipart](.springmvc/spring_img/FORM_multipart.png)
+![FORM_multipart](../spring_img/FORM_multipart.png)
 
     - 이 방식을 사용하려면 Form 태그에 별도의 entype="multipart/form-data"를 지정해야 한다.
     multipart/form-data 방식은 다른 종류의 여러 파일과 폼의 내용 함께 전송할 수 있다. (그래서 이름이 mulipart)

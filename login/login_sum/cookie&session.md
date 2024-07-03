@@ -186,11 +186,11 @@
 
 ### 로그인 처리하기 - cookie 사용
     ● 로그인 상태 유지하기 - 쿠키
-![cookie1](./login/login_img/cookie1.png) 
+![cookie1](../login_img/cookie1.png) 
 
-![cookie2](./login/login_img/cookie2.png) 
+![cookie2](../login_img/cookie2.png) 
 
-![cookie3](./login/login_img/cookie3.png) 
+![cookie3](../login_img/cookie3.png) 
 
     - 영속 쿠키 : 만료 날짜를 입력하면 해당 날짜까지 유지
     - 세션 쿠키 : 만료 날짜를 생략하면 브라우저 종료시 까지만 유지
@@ -243,15 +243,15 @@
 
     이렇게 서버에 중요한 정보를 보관하고 연결을 유지하는 방법을 세션이라 한다.
 
-![session1](./login/login_img/session1.png)
+![session1](../login_img/session1.png)
 
-![session2](./login/login_img/session2.png)
+![session2](../login_img/session2.png)
     - 세션 ID를 생성하는데, 추정 불가능해야 한다.
     - UUID는 추정이 불가능하다.
       - Cookie : mySessionId=zz0101xx-bab9-4b92-9b32-deadb280f4b21
     - 생성된 세션 ID와 세션에 보관할 값(memberA)을 서버의 세션 저장소에 보관한다.
 
-![session3](./login/login_img/session3.png)
+![session3](../login_img/session3.png)
     - 클라이언트와 서버는 결국 쿠키로 연결이 되어야 한다.
     - 클라이언트는 쿠키 저장소에 mySessionId 쿠키를 보관한다.
     
@@ -259,7 +259,7 @@
     - 여기서 중요한 포인트는 회원과 관련된 정보는 전혀 클라이언트에 전달하지 않는다는 것이다.
     - 오직 추정 불가능한 세션 ID만 쿠키를 통해 클라이언트에 전달한다.
 
-![session4](./login/login_img/session4.png)
+![session4](../login_img/session4.png)
     - 클라이언트는 요청시 항상 mySessionId 쿠키를 전달한다.
     - 서버에서는 클라이언트가 전달한 mySessionId 쿠키 정보로 세션 저장소를 조회해서 로그인시 보관한 세션 정보를 사용한다.
 

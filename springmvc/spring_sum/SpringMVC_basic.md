@@ -581,7 +581,7 @@
     뷰 템플릿으로 HTML을 생성해서 응답하는 것이 아니라, HTTP API처럼 JSON 데이터를 HTTP 메시지 바디에서 직접 읽거나 쓰는 경우 HTTP 메시지 컨버터를 사용하면 편리하다.
 
     먼저 과거의 @ResponseBody 사용 원리로 돌아가서 기본부터 알아보자.
-![ResponseBody](./springmvc/spring_img/ResponseBody.png)        
+![ResponseBody](../spring_img/ResponseBody.png)        
 
     ● @ResposnseBody를 사용
         - HTTP의 BODY에 문자 내용을 직접 반환.
@@ -597,7 +597,7 @@
 ### HandelrAdapter
     그렇다면 HTTP 메시지 컨버터는 스프링 MVC 어디쯤에서 사용되는 것일까?
     -@RequestMapping을 처리하는 헨들러 어댑터인 RequestMappingHandlerAdapter 요청 매핑 헨들러 어뎁터에 있다.
-![HandelrAdapter](./springmvc/spring_img/HandelrAdapter.png)     
+![HandelrAdapter](../spring_img/HandelrAdapter.png)     
 
     HttpServletRequest, Model은 물론이고, @RequestParam, @ModelAttribute 같은 어노테이션 그리고 @RequestBody, HttpEntity 같은 HTTP 메시지를 처리하는 부분까지 매우 큰 유연함을 보여준다.
     이렇게 파라미터를 유연하게 처리할 수 있는 이유가 ArgumentResolver 이다.
@@ -628,7 +628,7 @@
     ex) ModelAndView, @ResponseBody, HttpEntity, String    
 
     ● HTTP Message Converter 위치
-![HTTP_Converter](./springmvc/spring_img/HTTP_Converter.png)
+![HTTP_Converter](../spring_img/HTTP_Converter.png)
 
     ● 요청의 경우 
     @RequestBody를 처리히는 ArgumentResolver가 있고, HttpEntity를 처리하는 ArgumentResolver가 있다. 이 ArgumentResolver들이 HTTP 메시지 컨버터를 사용해서 필요한 객체를 생성하는 것이다.

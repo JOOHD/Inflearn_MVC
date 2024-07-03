@@ -1,4 +1,4 @@
-# Inflearn 
+# Inflearn_lectureList
 
 ### 계기
 Spring Framework, Spring Boot 만 공부하고 사용해오다가,

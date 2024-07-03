@@ -1,13 +1,13 @@
 # 본문
 
 ### Servlet container 동작 방식
-![Servlet_Request_Response](./servlet/Servlet_img/servlet.png)
+![Servlet_Response](../servlet_img/servlet.png)
 
 ### HttpServletRequest 역할
 servlet은 개발자가 HTTP 요청 메시지를 편리하게 사용할 수 있도록 개발자 대신에
 HTTP 요청 메시지를 파싱한다. 그리고 그 결과를 HttpServletRequest 객체에 담아서 제공한다.
 
-![HTTP_Request_Message](./Servlet_img/HTTP_Message.png)
+![HTTP_Message](../Servlet_img/HTTP_Message.png)
 
 ###  START LINE
 
