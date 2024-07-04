@@ -446,3 +446,133 @@
         <option value="NORMAL">일반 배송</option>
         <option value="SLOW">느린 배송</option>
     </select>
+
+### 프로젝트 타임리프 적용 (상품 등록)    
+<div class="admin_content_main">
+    <form action="/admin/goodsEnroll" method="post" id="enrollForm" th:object="${book}" enctype="multipart/form-data">
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="bookName">책 제목</label>
+            </div>
+            <div class="form_section_content">
+                <input type="text" th:field="*{bookName}" id="bookName"> 
+                <span class="ck_warn bookName_warn" th:if="${#fields.hasErrors('bookName')}" th:text="${#fields.errors('bookName')}">책 이름을 입력해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="authorName_input">작가</label>
+            </div>
+            <div class="form_section_content">
+                <input type="text" id="authorName_input" readonly="readonly" th:field="*{authorName}">
+                <input type="hidden" id="authorId_input" th:field="*{authorId}">
+                <button type="button" class="authorId_btn">작가 선택</button>
+                <span class="ck_warn authorId_warn" th:if="${#fields.hasErrors('authorId')}" th:text="${#fields.errors('authorId')}">작가를 선택해주세요</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="publeYear">출판일</label>
+            </div>
+            <div class="form_section_content">
+                <input type="text" th:field="*{publeYear}" id="publeYear" autocomplete="off" readonly="readonly">
+                <span class="ck_warn publeYear_warn" th:if="${#fields.hasErrors('publeYear')}" th:text="${#fields.errors('publeYear')}">출판일을 선택해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="publisher">출판사</label>
+            </div>
+            <div class="form_section_content">
+                <input type="text" th:field="*{publisher}" id="publisher"> 
+                <span class="ck_warn publisher_warn" th:if="${#fields.hasErrors('publisher')}" th:text="${#fields.errors('publisher')}">출판사를 입력해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label>책 카테고리</label>
+            </div>
+            <div class="form_section_content">
+                <div class="cate_wrap">
+                    <span>대분류</span> 
+                    <select class="cate1" th:field="*{cate1}">
+                        <option selected value="none">선택</option>
+                    </select>
+                </div>
+                <div class="cate_wrap">
+                    <span>중분류</span> 
+                    <select class="cate2" th:field="*{cate2}">
+                        <option selected value="none">선택</option>
+                    </select>
+                </div>
+                <div class="cate_wrap">
+                    <span>소분류</span> 
+                    <select class="cate3" th:field="*{cateCode}">
+                        <option selected value="none">선택</option>
+                    </select>
+                </div>
+                <span class="ck_warn cateCode_warn" th:if="${#fields.hasErrors('cateCode')}" th:text="${#fields.errors('cateCode')}">카테고리를 선택해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="bookPrice">상품 가격</label>
+            </div>
+            <div class="form_section_content">
+                <input type="text" th:field="*{bookPrice}" id="bookPrice" value="0"> 
+                <span class="ck_warn bookPrice_warn" th:if="${#fields.hasErrors('bookPrice')}" th:text="${#fields.errors('bookPrice')}">상품 가격을 입력해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="bookStock">상품 재고</label>
+            </div>
+            <div class="form_section_content">
+                <input type="text" th:field="*{bookStock}" id="bookStock" value="0"> 
+                <span class="ck_warn bookStock_warn" th:if="${#fields.hasErrors('bookStock')}" th:text="${#fields.errors('bookStock')}">상품 재고를 입력해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="discount_interface">상품 할인율</label>
+            </div>
+            <div class="form_section_content">
+                <input type="text" id="discount_interface" maxlength="2" value="0" th:oninput="this.nextElementSibling.value = this.value"> 
+                <input type="hidden" th:field="*{bookDiscount}" value="0">
+                <span class="step_val">할인 가격 : <span class="span_discount"></span></span>
+                <span class="ck_warn bookDiscount_warn" th:if="${#fields.hasErrors('bookDiscount')}" th:text="${#fields.errors('bookDiscount')}">1~99 숫자를 입력해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="bookIntro_textarea">책 소개</label>
+            </div>
+            <div class="form_section_content bit">
+                <textarea th:field="*{bookIntro}" id="bookIntro_textarea"></textarea>
+                <span class="ck_warn bookIntro_warn" th:if="${#fields.hasErrors('bookIntro')}" th:text="${#fields.errors('bookIntro')}">책 소개를 입력해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label for="bookContents_textarea">책 목차</label>
+            </div>
+            <div class="form_section_content bct">
+                <textarea th:field="*{bookContents}" id="bookContents_textarea"></textarea>
+                <span class="ck_warn bookContents_warn" th:if="${#fields.hasErrors('bookContents')}" th:text="${#fields.errors('bookContents')}">책 목차를 입력해주세요.</span>
+            </div>
+        </div>
+        <div class="form_section">
+            <div class="form_section_title">
+                <label>상품 이미지</label>
+            </div>
+            <div class="form_section_content">
+                <input type="file" id="fileItem" name='uploadFile' style="height: 30px;" multiple>
+                <div id="uploadResult"></div>					
+            </div>
+        </div>
+    </form>
+    <div class="btn_section">
+        <button id="cancelBtn" class="btn">취 소</button>
+        <button id="enrollBtn" class="btn enroll_btn" th:onclick="|document.getElementById('enrollForm').submit()|">등 록</button>
+    </div>
+</div>
