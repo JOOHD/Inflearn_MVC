@@ -448,131 +448,387 @@
     </select>
 
 ### 프로젝트 타임리프 적용 (상품 등록)    
-<div class="admin_content_main">
-    <form action="/admin/goodsEnroll" method="post" id="enrollForm" th:object="${book}" enctype="multipart/form-data">
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="bookName">책 제목</label>
-            </div>
-            <div class="form_section_content">
-                <input type="text" th:field="*{bookName}" id="bookName"> 
-                <span class="ck_warn bookName_warn" th:if="${#fields.hasErrors('bookName')}" th:text="${#fields.errors('bookName')}">책 이름을 입력해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="authorName_input">작가</label>
-            </div>
-            <div class="form_section_content">
-                <input type="text" id="authorName_input" readonly="readonly" th:field="*{authorName}">
-                <input type="hidden" id="authorId_input" th:field="*{authorId}">
-                <button type="button" class="authorId_btn">작가 선택</button>
-                <span class="ck_warn authorId_warn" th:if="${#fields.hasErrors('authorId')}" th:text="${#fields.errors('authorId')}">작가를 선택해주세요</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="publeYear">출판일</label>
-            </div>
-            <div class="form_section_content">
-                <input type="text" th:field="*{publeYear}" id="publeYear" autocomplete="off" readonly="readonly">
-                <span class="ck_warn publeYear_warn" th:if="${#fields.hasErrors('publeYear')}" th:text="${#fields.errors('publeYear')}">출판일을 선택해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="publisher">출판사</label>
-            </div>
-            <div class="form_section_content">
-                <input type="text" th:field="*{publisher}" id="publisher"> 
-                <span class="ck_warn publisher_warn" th:if="${#fields.hasErrors('publisher')}" th:text="${#fields.errors('publisher')}">출판사를 입력해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label>책 카테고리</label>
-            </div>
-            <div class="form_section_content">
-                <div class="cate_wrap">
-                    <span>대분류</span> 
-                    <select class="cate1" th:field="*{cate1}">
-                        <option selected value="none">선택</option>
-                    </select>
+    <div class="admin_content_main">
+        <form action="/admin/goodsEnroll" 
+             method="post" 
+            id="enrollForm" 
+            th:object="${book}" 
+            enctype="multipart/form-data">
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="bookName">책 제목</label>
                 </div>
-                <div class="cate_wrap">
-                    <span>중분류</span> 
-                    <select class="cate2" th:field="*{cate2}">
-                        <option selected value="none">선택</option>
-                    </select>
+                <div class="form_section_content">
+                    <input type="text" th:field="*{bookName}" id="bookName"> 
+                    <span class="ck_warn bookName_warn" 
+                    th:if="${#fields.hasErrors('bookName')}" 
+                    th:text="${#fields.errors('bookName')}">
+                    책 이름을 입력해주세요.</span>
                 </div>
-                <div class="cate_wrap">
-                    <span>소분류</span> 
-                    <select class="cate3" th:field="*{cateCode}">
-                        <option selected value="none">선택</option>
-                    </select>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="authorName_input">작가</label>
                 </div>
-                <span class="ck_warn cateCode_warn" th:if="${#fields.hasErrors('cateCode')}" th:text="${#fields.errors('cateCode')}">카테고리를 선택해주세요.</span>
+                <div class="form_section_content">
+                    <input type="text" id="authorName_input" readonly="readonly" th:field="*{authorName}">
+                    <input type="hidden" id="authorId_input" th:field="*{authorId}">
+                    <button type="button" class="authorId_btn">작가 선택</button>
+                    <span class="ck_warn authorId_warn" 
+                    th:if="${#fields.hasErrors('authorId')}" 
+                    th:text="${#fields.errors('authorId')}">
+                    작가를 선택해주세요</span>
+                </div>
             </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="publeYear">출판일</label>
+                </div>
+                <div class="form_section_content">
+                    <input type="text" 
+                    th:field="*{publeYear}" 
+                    id="publeYear" 
+                    autocomplete="off" 
+                    readonly="readonly">
+                    <span class="ck_warn publeYear_warn" 
+                    th:if="${#fields.hasErrors('publeYear')}" 
+                    th:text="${#fields.errors('publeYear')}">
+                    출판일을 선택해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="publisher">출판사</label>
+                </div>
+                <div class="form_section_content">
+                    <input type="text" 
+                    th:field="*{publisher}" 
+                    id="publisher"> 
+                    <span class="ck_warn publisher_warn" 
+                    th:if="${#fields.hasErrors('publisher')}" 
+                    th:text="${#fields.errors('publisher')}">
+                    출판사를 입력해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label>책 카테고리</label>
+                </div>
+                <div class="form_section_content">
+                    <div class="cate_wrap">
+                        <span>대분류</span> 
+                        <select class="cate1" th:field="*{cate1}">
+                            <option selected value="none">선택</option>
+                        </select>
+                    </div>
+                    <div class="cate_wrap">
+                        <span>중분류</span> 
+                        <select class="cate2" th:field="*{cate2}">
+                            <option selected value="none">선택</option>
+                        </select>
+                    </div>
+                    <div class="cate_wrap">
+                        <span>소분류</span> 
+                        <select class="cate3" th:field="*{cateCode}">
+                            <option selected value="none">선택</option>
+                        </select>
+                    </div>
+                    <span class="ck_warn cateCode_warn" 
+                    th:if="${#fields.hasErrors('cateCode')}" 
+                    th:text="${#fields.errors('cateCode')}">
+                    카테고리를 선택해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="bookPrice">상품 가격</label>
+                </div>
+                <div class="form_section_content">
+                    <input type="text" 
+                    th:field="*{bookPrice}" 
+                    id="bookPrice" value="0"> 
+                    <span class="ck_warn bookPrice_warn" 
+                    th:if="${#fields.hasErrors('bookPrice')}" 
+                    th:text="${#fields.errors('bookPrice')}">
+                    상품 가격을 입력해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="bookStock">상품 재고</label>
+                </div>
+                <div class="form_section_content">
+                    <input type="text" 
+                    th:field="*{bookStock}" 
+                    id="bookStock" value="0"> 
+                    <span class="ck_warn bookStock_warn" 
+                    th:if="${#fields.hasErrors('bookStock')}" 
+                    th:text="${#fields.errors('bookStock')}">상품 재고를 입력해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="discount_interface">상품 할인율</label>
+                </div>
+                <div class="form_section_content">
+                    <input type="text" 
+                    id="discount_interface" 
+                    maxlength="2" 
+                    value="0" 
+                    th:oninput="this.nextElementSibling.value = this.value"> 
+                    <input type="hidden" 
+                    th:field="*{bookDiscount}" 
+                    value="0">
+                    <span class="step_val">할인 가격 : <span class="span_discount"></span></span>
+                    <span class="ck_warn bookDiscount_warn" 
+                    th:if="${#fields.hasErrors('bookDiscount')}" th:text="${#fields.errors('bookDiscount')}">1~99 숫자를 입력해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="bookIntro_textarea">책 소개</label>
+                </div>
+                <div class="form_section_content bit">
+                    <textarea th:field="*{bookIntro}" id="bookIntro_textarea"></textarea>
+                    <span class="ck_warn bookIntro_warn" 
+                    th:if="${#fields.hasErrors('bookIntro')}" 
+                    th:text="${#fields.errors('bookIntro')}">
+                    책 소개를 입력해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label for="bookContents_textarea">책 목차</label>
+                </div>
+                <div class="form_section_content bct">
+                    <textarea th:field="*{bookContents}" id="bookContents_textarea"></textarea>
+                    <span class="ck_warn bookContents_warn" 
+                    th:if="${#fields.hasErrors('bookContents')}" th:text="${#fields.errors('bookContents')}">
+                    책 목차를 입력해주세요.</span>
+                </div>
+            </div>
+            <div class="form_section">
+                <div class="form_section_title">
+                    <label>상품 이미지</label>
+                </div>
+                <div class="form_section_content">
+                    <input type="file" 
+                    id="fileItem" 
+                    name='uploadFile' style="height: 30px;" multiple>
+                    <div id="uploadResult"></div>					
+                </div>
+            </div>
+        </form>
+        <div class="btn_section">
+            <button id="cancelBtn" class="btn">취 소</button>
+            <button id="enrollBtn" class="btn enroll_btn" th:onclick="|document.getElementById('enrollForm').submit()|">등 록</button>
         </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="bookPrice">상품 가격</label>
-            </div>
-            <div class="form_section_content">
-                <input type="text" th:field="*{bookPrice}" id="bookPrice" value="0"> 
-                <span class="ck_warn bookPrice_warn" th:if="${#fields.hasErrors('bookPrice')}" th:text="${#fields.errors('bookPrice')}">상품 가격을 입력해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="bookStock">상품 재고</label>
-            </div>
-            <div class="form_section_content">
-                <input type="text" th:field="*{bookStock}" id="bookStock" value="0"> 
-                <span class="ck_warn bookStock_warn" th:if="${#fields.hasErrors('bookStock')}" th:text="${#fields.errors('bookStock')}">상품 재고를 입력해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="discount_interface">상품 할인율</label>
-            </div>
-            <div class="form_section_content">
-                <input type="text" id="discount_interface" maxlength="2" value="0" th:oninput="this.nextElementSibling.value = this.value"> 
-                <input type="hidden" th:field="*{bookDiscount}" value="0">
-                <span class="step_val">할인 가격 : <span class="span_discount"></span></span>
-                <span class="ck_warn bookDiscount_warn" th:if="${#fields.hasErrors('bookDiscount')}" th:text="${#fields.errors('bookDiscount')}">1~99 숫자를 입력해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="bookIntro_textarea">책 소개</label>
-            </div>
-            <div class="form_section_content bit">
-                <textarea th:field="*{bookIntro}" id="bookIntro_textarea"></textarea>
-                <span class="ck_warn bookIntro_warn" th:if="${#fields.hasErrors('bookIntro')}" th:text="${#fields.errors('bookIntro')}">책 소개를 입력해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label for="bookContents_textarea">책 목차</label>
-            </div>
-            <div class="form_section_content bct">
-                <textarea th:field="*{bookContents}" id="bookContents_textarea"></textarea>
-                <span class="ck_warn bookContents_warn" th:if="${#fields.hasErrors('bookContents')}" th:text="${#fields.errors('bookContents')}">책 목차를 입력해주세요.</span>
-            </div>
-        </div>
-        <div class="form_section">
-            <div class="form_section_title">
-                <label>상품 이미지</label>
-            </div>
-            <div class="form_section_content">
-                <input type="file" id="fileItem" name='uploadFile' style="height: 30px;" multiple>
-                <div id="uploadResult"></div>					
-            </div>
-        </div>
-    </form>
-    <div class="btn_section">
-        <button id="cancelBtn" class="btn">취 소</button>
-        <button id="enrollBtn" class="btn enroll_btn" th:onclick="|document.getElementById('enrollForm').submit()|">등 록</button>
     </div>
-</div>
+
+    ● th:oninput
+    - 타임리프 속성으로 HTML 요소에 'oninput' 이벤트 핸들러를 설정한다.
+    - 이벤트는 사용자가 입력 필드의 값을 변경할 때마다 발생한다.
+        ex)
+            <input type="text" id="inputField" name="inputField"
+            th:oninput="this.nextElementSibling.value = this.value">
+            - 사용자가 첫 번째 입력 필드에 값을 입력할 때마다 발생.
+             
+    - jQuery 기능의 change 이벤트와 유사하다. change 이벤트는 입력 필드의 값이 변경되었을 때 발생한다. 하지만 oninput 이벤트ㄹ와 다른 점은 입력 필드가 포커스를 잃을 대나 사용자가 엔터 키를 누를 때 발생한다. 
+        ex)
+            <title>jQuery change 이벤트 예제</>
+            <script>
+                $(document).ready(function() {
+                    $('#outputField').val($(this).val()); 
+                })
+            </>
+            <body>
+            <form action="#" method="post">
+                <div>
+                    <label for="inputField">입력 필드:</label>
+                    <input type="text" id="inputField" name="inputField">
+                    <input type="text" id="outputField" readonly>
+                </div>
+            </form>
+            </body>
+
+        ex) 이메일 주소 검증
+            <meta charset="UTF-8">
+            <title>이메일 주소 검증</>
+            <body>
+                <form action="#">
+                    <label for="email">이메일 :</>
+                    <input type="text" id="email" name="email" oninput="validateEamil(this)">
+                    <span id="emailFeedback"></>
+            </>
+            <script>
+                function validateEmail(input) {
+                    const email = input.value;
+                    const feedback = document.ggetElementById('emailFeedback');
+                    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+                    if (emailPattern.test(email)) {
+                        feedback.textContent = '유요한 이메일 주소입니다.';
+                        feedback.className = 'valid';
+                    } else {
+                        feedback.textContent = '유요하지 않은 이메일 주소입니다.';
+                        feedback.className = 'invalid';
+                    }
+                }
+            </> 
+
+        ex) 실시간 텍스트 카운팅
+            <body>
+                <form action="#">
+                    <label for="tweet">트윗 :</>
+                    <textarea id="tweet" name="tweet" maxlength="280" oninput="countCharset(this)">
+                    <div id="charCount">280자 남음</>
+                </>
+            </>
+
+            <script>
+                function countChars(input) {
+                    const maxLength = input.maxLength;
+                    const currentLength = input.value.length;
+                    const charCount = document.getElementById('charCount');
+
+                    charCount.textCount = '${maxLength - currentLength}자 남음';
+                }    
+            </>
+
+        ex) 실시간 검색 필터링
+            <script>
+                $(document).raedy(function() {
+                    $('#searchInput').on('input', function() {
+                        var value = $(this).val().toLowerCasee();
+                        $('#list li').filter(function() {
+                            $(this).toggle($(this).text().toLowerCase().indexof(value) -> -1);
+                        });
+                    });
+                });                           
+            </>    
+
+            <body>
+                <form action="#">
+                    <label for="searchInput">검색:</label>
+                    <input type="text" id="searchInput" name="searchInput">
+                </form>
+                <ul id="list">
+                    <li>Apple</li>
+                    <li>Banana</li>
+                    <li>Cherry</li>
+                    <li>Grape</li>
+                    <li>Orange</li>
+                </ul>
+            </body>
+
+    ● 요약
+    'oninput' 이벤트는 사용자가 입력 필드의 값을 변경할 때마다 발생하는 이벤드로, 실시간 검증, 실시간 반응, 입력 제한 등 다양한 기능을 구현하는 데 사용된다. 제이쿼리에서는 이와 유사한 이벤트로 input 이벤트를 사용할 수 있으면, 해당 이벤트를 사용하면 사용자가 입력할 때마다 실시간으로 원하는 동작을 수행 가능하다.
+
+    ● th:nextElementSibling
+    - this 키워드는 현재 이벤트가 발생한 HTML 요소를 참조한다. 
+        ex) 
+            <input> 요소에서 이벤트가 발생하면 this는 해당 <input> 요소를 참조한다.
+
+    - 현재 요소의 다음 형제 요소를 참조한다.
+    - 첫 번쨰 입력 필드에 입력한 내용이 실시간으로 두 번째 입력 필드에 복사.
+        ex)
+            <form>
+                <label for="input1">첫 번째 입력 필드:</>
+                <input tupe="text" id="input1" oninput="copyText(this)">
+                <br>
+                <label for="input2">두 번째 입력 필드:</>
+                <input type="text" id="input2">
+            </>    
+
+            <script>
+                function copyText(input) {
+                    // 첫 번째 입력 필드의 다음 형제 요소(두 번째 입력 필드)에 값을 복사
+                    input.nextElementSibling.value = input.value;
+                }
+            </script>
+
+    - 첫 번째 입력 필드에서 oninput 이벤트가 발생할 때마다 copyText 함수가 호출된다.
+    - copyText가 호출되면 input.nextElemntSibling.value를 사용하여 첫 번째 입력 필드의 다음 형제 요소의 다음 형제 요소(두 번째 입력 필드)의 값을 처 번째 입력 필드의 값으로 설정한다.
+  
+        ex) 주소 입력 시 상세 주소 자동 복사
+            <form>
+                <label for="basicAddress">기본 주소: </>
+                <input type="text" id="basicAddress" oninput="copyAddress(this)">
+                <br>
+                <label for="detailedAddress">상세 주소: </>
+                <input type="text" id="detailedAddress">
+            </>
+
+            <script>
+                function copyAddress(input) {
+                    input.nextElementSibling.nextElementSibling.value = input.value;
+                }    
+            </>  
+
+        ex) 이메일 주소 자동 완성 예제
+            <form>
+                <label for="emailId">이메일 아이디</>
+                <input type="text" id="emailId" oninput="completeEmail(thils)">
+                <br>
+                <label for="email">전체 이메일 주소 :</>
+                <input type="text" id="email" readonly>
+            </>
+
+            <script>
+                function completeEmail(input) {
+                    const email = input.nextElementSibling.nextElementSibling;
+                    email.value = input.value + '@example.com';
+                }
+            </script>
+
+
+        ex) 파일 업로드 시 파일명 표시
+            <form>
+                <label for="fileUpload">파일 업로드</>
+                <input type="file" id="fileUpload" oninput="showFileName(this)">
+                <span id="fileName"></>
+            </>
+
+            <script>
+                function showFileName(input) {
+                    const fileName = document.getElementById('fileName');
+                    fileName.textCount = input.files[0].name; // 첫 번째 파일 이름 부터 가져오는.
+                }
+            </>    
+
+        ex) 여러 파일 선택 시 파일명 표시
+            <form>
+                <label for="multiFileUpload">여러 파일 업로드:</label>
+                <input type="file" id="multiFileUpload" multiple oninput="showFileNames(this)">
+                <ul id="fileNamesList"></ul>
+            </form>    
+
+            <script>
+                function showFileName(input) {
+                    const fileNameList = input.nextElementSibling;
+                    fileNamesList.innerHTML = '';
+                    if (input.files.length > 0) {
+                        for (let i = 0; i <input.files.length; i++) {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = input.files[i].name;
+                            fileNamesList.appendChild(listItem);
+                        }
+                    }
+                }
+            </input.files.length;>
+
+        ex) 파일 유형 선댙과 관련된 기타 예제
+            <form>
+                <label for="imageUpload">이미지 업로드 (JPEG/PNG): </>
+                <input type="file" id="imageUpload" accept=".jpg, .jpeg, .png" oninput="showFileName(this)">
+                <span id="imageName"></>
+            </> 
+
+            <script>
+                function showFileName(input) {
+                    if (input.files.length > 0) {
+                        const fileName = input.nextElementSibling;
+                        fileName.textContent = input.files[0].name;
+                    }
+                }
+            </>   
