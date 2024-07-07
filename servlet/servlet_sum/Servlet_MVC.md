@@ -55,7 +55,7 @@
 
 ## 서블릿으로 회원 관리 웹 애플리케이션 만들기
 ###  MemberFormServlet - 회원 등록 폼    
-    @WebServlet(name = "memberFormServlet", urlPatterns = "/servlet/members/new-form")
+    @WebServlet(name = "memberFormServlet", urlPatterns = "/Servlet/members/new-form")
     public class MemberFormSerlvet extends HttpServlet {
 
         @Override
@@ -71,7 +71,7 @@
                 "    <title>Title</title>\n" +
                 "</head>\n" +
                 "<body>\n" +
-                "<form action=\"/servlet/members/save\" method=\"post\">\n" +
+                "<form action=\"/Servlet/members/Save\" method=\"post\">\n" +
                 "    username: <input type=\"text\" name=\"username\" />\n" +
                 "    age:      <input type=\"text\" name=\"age\" />\n" +
                 "    <button type=\"submit\">전송</button>\n" +
@@ -84,7 +84,7 @@
     MemberFormServlet은 단순하게 회원 정보를 입력할 수 있는 HTML-Form을 만들어서 응답한다.(자바 코드로 HTML을 제공해야 하므로 쉽지 않다.)
 
 ### MemberSaveServlet - 회원 저장
-    @WebServlet(name = "memberSaveServlet", urlPatterns = "/servlet/members/save") 
+    @WebServlet(name = "memberSaveServlet", urlPatterns = "/Servlet/members/Save") 
     public class MemberSaveServlet extends HttpServlet {
 
         private MemberRepository memberRepository = MemberRepository.getInstance();
@@ -111,7 +111,7 @@
     3.Member 객체를 사용해서 결과 화면용 HTML을 동적으로 만들어서 응답한다.
 
 ### MemberListServlet - 회원 목록    
-    @WebServlet(name = "memberListServlet", urlPatterns = "/servlet/members")
+    @WebServlet(name = "memberListServlet", urlPatterns = "/Servlet/members")
     public class MemberListServlet extends HttpServlet {
 
         private MemberRepository memberRepository = MemberRepository.getInstance();
@@ -234,7 +234,7 @@
     View : model에 담겨있는 데이터를 사용해서 화면을 그리는 일에 집중.(HTML 생성.)
 
 ### MVC패턴2
-![MVC2_pattern](../servlet_img/mvc2.png)  
+![MVC2_pattern](../Servlet_img/mvc2.png)  
 
 ### MvcMemberFormServlet (mvc패턴)
     public class MvcMemberFormServlet extends HttpServlet {
@@ -257,7 +257,7 @@
 
     반면에 포워드는 서버 내부에서 일어나는 호출이기 때문에 클라이언트가 전혀 인지하지 못한다.
 
-    <!-- 상대경로 사용, [현재 URL이 속한 계층 경로 + /save] -->
+    <!-- 상대경로 사용, [현재 URL이 속한 계층 경로 + /Save] -->
     <form action="save" method="post">
         username: <input type="text" name="username" />
         age:      <input type="text" name="age" />
@@ -268,8 +268,8 @@
     상대경로(/로 시작x)인 것을 볼 수 있다.
     이렇게 상대경로를 사용하면 form 전송시 현재 URL이 속한 계층 경로 +save가 호출된다.
 
-    현재경로 : /servlet-mvc/members/
-    결과 : /servlet-mvc/members/save
+    현재경로 : /Servlet-mvc/members/
+    결과 : /Servlet-mvc/members/Save
 
 ### MvcMemberSaveServlet - 회원 저장(mvc패턴)
     String username = request.getParameter("username");
@@ -281,7 +281,7 @@
     //Model에 데이터를 set(보관), get(꺼냄)Attribute()
     request.setAttribute("member", member);
 
-    String viewPath = "/WEB-INF/views/save-request.jsp";
+    String viewPath = "/WEB-INF/views/Save-request.jsp";
     RequestDispatcher dispatcher = request.getReqeustDispatcher(viewPath);
     dispatcher.forward(request, response);
 

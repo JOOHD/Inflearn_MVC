@@ -11,9 +11,9 @@ Servlet 관련 기술의 부족함을 느끼게 되어 강의를 수강 받으�
 
 ## 강의 목차
 ### Servlet
-### ● <a href="">HTTP request/response</a>
-### ● <a href="">JSP/MVC 패턴</a>
-### ● <a href="">Framework</a>
+### ● <a href="servlet/servlet_sum/Servlet_HTTP.md">HTTP request/response</a>
+### ● <a href="servlet/servlet_sum/Servlet_MVC.md">JSP/MVC 패턴</a>
+### ● <a href="servlet/servlet_sum/Servlet_Framework.md">Framework</a>
 ### ● <a href="">SpringMVC</a>
 ### ● <a href="">SpringMVC - 기본기능</a>
 ### ● <a href="">SpringMVC - 웹 페이지 만들기</a>

@@ -1,9 +1,9 @@
 # 본문
 
 ### FrontController pattern 소개
-![frontB](../servlet_img/front%20_before.png)
+![frontB](../Servlet_img/front%20_before.png)
 
-![frontA](../servlet_img/front_after.png)
+![frontA](../Servlet_img/front_after.png)
 
 ### FrontController pattern 특징
     1.프론트 컨트롤러 서블릿 하나로 클라이언트의 요청을 받음
@@ -13,7 +13,7 @@
     5.프론트 컨트롤러를 제외한 나머지 컨트롤러는 서블릿을 사용하지 않아도 됨
 
 ### FrontController V1 구조
-![V1](../servlet_img/front_V1.png)    
+![V1](../Servlet_img/front_V1.png)    
 
 ### ControllerV1 interface
     public interface ControllerV1 {
@@ -43,7 +43,7 @@
 
         public FrontControllerServletV1() {
             ControllerMap.put("/front-controller/v1/members/new-form", new MemberFormControllerV1());
-            ControllerMap.put("/front-controller/v1/members/save", new MemberSaveControllerV1());
+            ControllerMap.put("/front-controller/v1/members/Save", new MemberSaveControllerV1());
             ControllerMap.put("/front-controller/v1/members", new MemberListControllerV1());
         }
 
@@ -77,7 +77,7 @@
     dispatcher.forward(request, response);
 
 ### FrontController V2 구조
-![V2](../servlet_img/front_V2.png)
+![V2](../Servlet_img/front_V2.png)
 
 ### V2 = MyView 
     public class MyView {
@@ -120,7 +120,7 @@
 
         public FrontControllerServletV2() {
             controllerMap.put("/front-controller/v2/members/new-form", new MemberFormControllerV2());
-            controllerMap.put("/front-controller/v2/members/save", new MemberSaveControllerV2());
+            controllerMap.put("/front-controller/v2/members/Save", new MemberSaveControllerV2());
             controllerMap.put("/front-controller/v2/members", new MemberListControllerV2());
         }
 
@@ -160,11 +160,11 @@
 
     ● View 이름 중복 제거
     /WEB-INF/views/new-form.jsp -> new-form
-    /WEB-INF/views/save-result.jsp -> save-result
+    /WEB-INF/views/Save-result.jsp -> save-result
     /WEB-INF/views/members.jsp -> members
 
 ### FrontController V3 구조    
-![V3](../servlet_img/front_V3.png)
+![V3](../Servlet_img/front_V3.png)
 
 ### ModelView
     지금까지 컨트롤러에서 서블릿에 종속적인 HttpServletRequest를 사용.
@@ -194,7 +194,7 @@
     public class FrontControllerServletV3() {
         controllerMap.put("/front-controller/v3/members/new-form", new 
         MemberFormControllerV3());
-        controllerMap.put("/front-controller/v3/members/save", new 
+        controllerMap.put("/front-controller/v3/members/Save", new 
         MemberSaveControllerV3());
         controllerMap.put("/front-controller/v3/members", new 
         MemberListControllerV3());
@@ -273,7 +273,7 @@
     V3를 조금 변경해서 실제 구현하는 개발자들이 매우 편리하게 개발 가능한 V4를 구현해보자.
 
 ### FrontController V4 구조    
-![V4](../servlet_img/front_V4.png)    
+![V4](../Servlet_img/front_V4.png)    
 
     기본적인 구조는 V3와 같다. 대신에 컨트롤러가 ModelView를 반환하지 않고, viewName만 반환한다.
 
@@ -307,7 +307,7 @@
         public FrontControllerServletV4() {
         controllerMap.put("/front-controller/v4/members/new-form", new 
         MemberFormControllerV4());
-        controllerMap.put("/front-controller/v4/members/save", new 
+        controllerMap.put("/front-controller/v4/members/Save", new 
         MemberSaveControllerV4());
         controllerMap.put("/front-controller/v4/members", new 
         MemberListControllerV4());
@@ -355,7 +355,7 @@
     따라서 호환이 불가능하다. 마치 V3는 110V이고, V4는 220V 전기 콘셉트 같은 것이다. 이럴 때 사용하는 기능이 어뎁터이다.
     
 ### FrontController V5 구조    
-![V5](../servlet_img/front_V5.png)
+![V5](../Servlet_img/front_V5.png)
 
     ● 핸들러 어댑터 : 중간에 어댑터 역할을 하는 어댑터가 추가되었는데, 이름이 핸들러 어댑터이다. 여기서 어댑터 역할을 해주는 덕분에 다양한 종류의 컨트롤러를 호출할 수 있다.
 
@@ -419,12 +419,12 @@
         private void initHandlerMappingMap() {
             //V3
             handlerMappingMap.put("/front-controller/v5/v3/members/new-form", new MemberFormControllerV3());
-            handlerMappingMap.put("/front-controller/v5/v3/members/save", new MemberSaveControllerV3());
+            handlerMappingMap.put("/front-controller/v5/v3/members/Save", new MemberSaveControllerV3());
             handlerMappingMap.put("/front-controller/v5/v3/members", new MemberListControllerV3());
 
              //V4 추가
             handlerMappingMap.put("/front-controller/v5/v4/members/new-form", new MemberFormControllerV4());
-            handlerMappingMap.put("/front-controller/v5/v4/members/save", new MemberSaveControllerV4());
+            handlerMappingMap.put("/front-controller/v5/v4/members/Save", new MemberSaveControllerV4());
             handlerMappingMap.put("/front-controller/v5/v4/members", new MemberListControllerV4());
         }
 
