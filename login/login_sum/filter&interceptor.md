@@ -289,7 +289,7 @@
         - 서블릿 필넡의 경우 단순하게 doFilter() 하나만 제공된다. 인터셉터는 컨트롤러 호출 전(preHandle), 호출 후(postHandle), 요청 완료 이후(afterCompletion)와 같이 단계적으로 잘 세분화 되어 있다.
         - 서블릿 필터의 경우 단순히 request, response 만 제공했지만, 인터셉터는 어떤 컨트롤러(handler)가 호출되는지 호출 정보도 받을 수 있다. 그리고 어떤 modelAndView가 반환되는지 응답 정보도 받을 수 있따.
 
-![interceptor](../login_img/filter&interceptor.png)
+![interceptor](../login_img/interceptor.png)
 
         ● 정상 흐름
         - preHandle : 컨트롤러 호출 전에 호출된다.(메서드가 순차적으로 실행.)
@@ -310,7 +310,7 @@
            ex) 리소스를 정리하거나 로그를 기록하는 등의 후처리를 수행.
         8) HTML 응답
         
-![interceptor_excep](../login_img/filter&interceptor2.png)
+![interceptor_excep](../login_img/interceptor2.png)
 
         ● 예외가 발생시
         - preHandle : 컨트롤러 호출 전에 호출된다.
