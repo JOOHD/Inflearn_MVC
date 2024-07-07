@@ -11,12 +11,12 @@ Servlet 관련 기술의 부족함을 느끼게 되어 강의를 수강 받으�
 
 ## 강의 목차
 ### Servlet
-### ● <a href="https://github.com/JOOHD/Inflearn_MVC/blob/main/servlet/Servlet_%EC%A0%95%EB%A6%AC/Servlet_HTTP.md">Servlet HTTP request/response</a>
-### ● <a href="">Servlet JSP/MVC 패턴</a>
-### ● <a href="">Servlet Framework</a>
-### ● <a href="">Servlet SpringMVC</a>
-### ● <a href="">Servlet SpringMVC - 기본기능</a>
-### ● <a href="">Servlet SpringMVC - 웹 페이지 만들기</a>
+### ● <a href="">HTTP request/response</a>
+### ● <a href="">JSP/MVC 패턴</a>
+### ● <a href="">Framework</a>
+### ● <a href="">SpringMVC</a>
+### ● <a href="">SpringMVC - 기본기능</a>
+### ● <a href="">SpringMVC - 웹 페이지 만들기</a>
 
 ### Spring
 ### ● <a href="">Thymeleaf - 기본기능</a>
@@ -31,3 +31,5 @@ Servlet 관련 기술의 부족함을 느끼게 되어 강의를 수강 받으�
 ### ● <a href="">Spring type converter</a>
 ### ● <a href="">File upload</a>
 
+### Spring 개념 
+### ● <a href=""></a>
