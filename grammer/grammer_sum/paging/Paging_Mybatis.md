@@ -1,6 +1,6 @@
 ## 본문
 
-### springMVC - paging(MyBatis 적용)
+### part1 - paging(MyBatis 적용)
 
 ### 1.페이징(Paging)이란?
     - 페이징은 사용자에게 데이터를 제공할 때, 전체 데이터 중의 일부를 보여주는 방식이다.
@@ -140,7 +140,9 @@
 
 ### 6.자가 복사 이용
     1. 게시글(tb_post) 테이블 초기화 하기
-    페이징 테스트를 위해서는 대량의 데이터가 필요하다. 이럴 때 자가 복사를 이용하면 되는데요, DBMS 툴에서 게시글 테이블을 초기화하는 다음의 명령어를 실행.(TRUNCATE는 테이블의 모든 데이터를 DELETE하고, AUTO_INCREMENT를 1로 초기화한다.)    
+    페이징 테스트를 위해서는 대량의 데이터가 필요하다. 이럴 때 자가 복사를 이용하면 되는데요, 
+    DBMS 툴에서 게시글 테이블을 초기화하는 다음의 명령어를 실행.
+    (TRUNCATE는 테이블의 모든 데이터를 DELETE하고, AUTO_INCREMENT를 1로 초기화한다.)    
         ex) TRUNCATE tb_post;
 
     2. 게시글 1,000개 등록하기
@@ -175,7 +177,7 @@
 
     다음은 자가 복사 쿼리를 5번 실행한 결과입니다.
 
-![paging_selfCopy](../img/paging_selfCony.png)
+![paging_selfCopy](../img/paging_selfCopy.png)
 
 ### 7.리스트 페이지 테스트 
     1. 쿼리 스트링 파라미터가 없는 경우
@@ -198,7 +200,7 @@
 
     page와recordSize를 파라미터로 전달했기 때문에 LIMIT 구문의 offset과 recordSize에 변화가 생긴다.
 
-![params_result2](../img/params_result2.png)  
+![param_result2](../img/param_result2.png)  
 ![findAll_query2](../img/findAll_query2.png)
 
 ### 8.Pagination 처리용 클래스 추가하기
@@ -256,10 +258,12 @@
 
         ● 클래스 구성요소 설명
         - totalRecordCount 
-        COUNT(*) 쿼리의 실행 결과, 즉 전체 게시글 개수를 의미한다. 당장은 테이블에서 삭제되지 않은 데이터를 기준으로 카운팅 하지만, 검색 기능이 적용된 후에는 검색 조건의 유무에 따라 필터링해서 카운팅 한다.
+        COUNT(*) 쿼리의 실행 결과, 즉 전체 게시글 개수를 의미한다. 당장은 테이블에서 삭제되지 않은 데이터를 기준으로 카운팅 하지만, 
+        검색 기능이 적용된 후에는 검색 조건의 유무에 따라 필터링해서 카운팅 한다.
 
         - totalPageCount 
-        페이지 하단에 출력할 전체 페이지 개수를 의미한다. 테이블에 1,000개의 데이터(record)가 있고, recordSize(페이지당 출력할 데이터 개수)가 10개라고 가정했을 때, 전체 페이지 개수는 (1,000/10)의 결과인 100개가 된다.
+        페이지 하단에 출력할 전체 페이지 개수를 의미한다. 테이블에 1,000개의 데이터(record)가 있고, 
+        recordSize(페이지당 출력할 데이터 개수)가 10개라고 가정했을 때, 전체 페이지 개수는 (1,000/10)의 결과인 100개가 된다.
 
         - startPage
         현재 페이지네이션의 첫 페이지를 의미한다. pageSize(화면 하단에 출력할 페이지 개수)가 10이고, page(현재 페이지 번호)가 5라고 가정했을 때 1을 의미한다.
@@ -295,7 +299,9 @@
     </select>
 
 ### 10.SearchDto 수정
-    findAll 쿼리에서는 pagination 객체의 limitStart를 사용하고 있으나, SearchDto에는 Pagination 타입의 멤버가 없으니, SearchDto가 Pagination 타입의 멤버를 갖도록 선언해 주어야 한다.
+    findAll 쿼리에서는 pagination 객체의 limitStart를 사용하고 있으나, 
+    SearchDto에는 Pagination 타입의 멤버가 없으니, 
+    SearchDto가 Pagination 타입의 멤버를 갖도록 선언해 주어야 한다.
 
         ex) SearchDto
         @Data
@@ -318,9 +324,12 @@
 ### 11.Paging 전용 Response 클래스 추가하기
     화면에 페이지 번호를 그리는 작업은 view 단에서 이루어져야 한다. 이때 list.html은 리스트 데이터와 Pagination 객체 모두를 필요로 한다.
 
-    그런데, 현재 PostService의 findAllPost()의 리턴 타입은 List<PostResponse>이다. Pagination 객체를 생성해서 페이지 정보를 계산하는 것까지는 문제가 되지 않지만, 현재의 리턴 타입으로는 리스트 데이터와 Pagination 객체 모두를 컨트롤러로 반환할 수가 없다.
+    그런데, 현재 PostService의 findAllPost()의 리턴 타입은 List<PostResponse>이다. 
+    Pagination 객체를 생성해서 페이지 정보를 계산하는 것까지는 문제가 되지 않지만, 
+    현재의 리턴 타입으로는 리스트 데이터와 Pagination 객체 모두를 컨트롤러로 반환할 수가 없다.
 
-    이를 해결하기 위해, key-value 구조로 이루어진 Map에 리스트 데이터와 Pagination 객체를 담아 리턴해 주어도 되지만, 좀 더 직관적인 처리를 위해 페이징 전용 응답 클래스를 생성해 보자.
+    이를 해결하기 위해, key-value 구조로 이루어진 Map에 리스트 데이터와 Pagination 객체를 담아 리턴해 주어도 되지만, 
+    좀 더 직관적인 처리를 위해 페이징 전용 응답 클래스를 생성해 보자.
 
         ex) PagingResponse<T> {
 
@@ -336,7 +345,9 @@
         - list : java의 제네릭을 활용, T는 Type을 의미하며, 어떤 타입의 객체던 데이터로 받겠다는 의미입니다.
 
 ### 12.Service 수정
-    이제 PostService의 findAllPost()에 페이지 정보를 계산하는 로직이 추가되어야 한다. 계산된 페이지 정보를 기준으로 findAll 쿼리를 실행하고, PagingResponse 클래스를 이용해서 리스트 데이터와 계산된 페이지 정보를 함께 리턴해 주어야 한다.
+    이제 PostService의 findAllPost()에 페이지 정보를 계산하는 로직이 추가되어야 한다. 
+    계산된 페이지 정보를 기준으로 findAll 쿼리를 실행하고, 
+    PagingResponse 클래스를 이용해서 리스트 데이터와 계산된 페이지 정보를 함께 리턴해 주어야 한다.
 
     /**
      *  게시글 리스트 조회
@@ -429,12 +440,13 @@
                 // 리스트 HTML draw
                 function drawList(list, num) {
 
-                    // 1. 렌더링 할 HTML을 저장할 변수
+                    // 1.렌더링 할 HTML을 저장할 변수
                     let html = '';
 
                     /*
-                    * 2. 기존에 타임리프(Thymeleaf)를 이용해서 리스트 데이터를 그리던 것과 유사한 로직
-                    *    기존에는 게시글 번호를 (전체 데이터 수 - loop의 인덱스 번호)로 처리했으나, 현재는 (전체 데이터 수 - ((현재 페이지 번호 - 1) * 페이지당 출력할 데이터 개수))로 정밀히 계산
+                       2.기존에 타임리프(Thymeleaf)를 이용해서 리스트 데이터를 그리던 것과 유사한 로직
+                         기존에는 게시글 번호를 (전체 데이터 수 - loop의 인덱스 번호)로 처리했으나, 
+                         현재는 (전체 데이터 수 - ((현재 페이지 번호 - 1) * 페이지당 출력할 데이터 개수))로 정밀히 계산
                     */
                     list.forEach(row => {
                         html += `
@@ -606,6 +618,406 @@
             25페이지에 있는 50번 게시글을 "수정/삭제" 하거나, 상세 또는 수정 페이지에서 "뒤로" 버튼을 클릭하면 다시 25페이지로 이동하는 기능.
             즉, 이전에 머무르던 페이지 정보가 유지되어야 한다.
 
+### par2 - searchType & keyword 검색 처리.
+    part1에서는 페이징과 검색 기능에 필요한 공통 클래스들을 정의하고,, 게시글 리스트 페이지에 페이징을 적용해보았다.
+    
+    이번에는 기존의 페이징에 게시글 검색 기능을 추가하고, 특정 페이지에서 어떠한 액션이 발생했을 때 이전 페이지 정보와 검색 조건을 유지시키는 기능을 구현해보겠습니다.
 
+### 1.검색 처리 (Dynamic SQL)
+    페이징과 검색 기능은 하나의 세트로 생각된다. 
+    페이징은 전체 데이터를 카운팅 한 기준으로 1 ~ N개까지의 페이지를 보여주는 반면, 
+    검색 기능은 SQL 쿼리에서 LIKE 검색 결과에 해당되는, 즉 필터링된 데이터를 카운팅 한 기준으로 1 ~ N개까지의 페이지를 보여준다.
 
+    검색 기능은 이전 글에서 생성한 SearchDto 클래스의 검색 keyword, searchType, MyBatis의 Dynamic SQL 기능을 이용해 처리 한다.
 
+### 2.HTML(검색 영역) 수정하기
+    part1에서는 sever단 로직을 미리 구성해 두고 client을 처리하는 순서로 진행을 했는데, 이와 반대로 검색 기능은 화면 처리를 우선으로 해보겠습니다.
+
+    ● list.html
+    <!-- 검색 -->
+    <div class="seach_box">
+        <form id="searchForm" onsubmit="return false;" autocomplete="off">
+            <div class="sch_group fi">
+                <select id="seachType" name="searchType" title="검색 유형 선택">
+                    <option value="">전체 검색</option>
+                    <option value="title">제목</option>
+                    <option value="content">내용</option>
+                    <option value="writer">작성자</option>
+                </select>
+                <input type="text" 
+                       id="keyword" 
+                       name="keyowrd" 
+                       placeholder="키워드를 입력해 주세요." 
+                       title="키워드 입력" />
+                <button type="button" 
+                        class="bt_search" 
+                        onclick="movePage(1);">
+                        <i class="fas fa-search"></i>
+                        <span class="skip_info">검색</span>
+                </button>
+            </div>            
+        </form>                
+    </div>
+
+    - searchForm : 검색 form을 의미한다. form의 searchType, keyword를 SQL 쿼리의 검색 조건으로 이용해ㅓ 게시글을 검색한다.
+    - movePage() : 검색 버튼에 연결된 클릭 이벤트입니다. movePage()는 페이지를 이동하는 기능을 하는데요, 
+                   여기서 포인트는 검색 버튼을 클릭했을 때 movePage() 인자로 '1'을 전달한다는 것이며, 
+                   검색 처리에서 현재 페이지 번호(page)는 항상 '1'로 유지되어야 한다.
+  
+    ● 페이지 번호가 1로 유지되어야 하는 이유1
+    - A가 15페이지에서 게시글을 흝어보고 있따.
+    - A는 B가 작성한 게시글을 보기 위해 '작성자'를 B로 해서 검색을 했다.
+    - A는 B의 게시글을 조회하는 데 성공했으나 이상한 점이 있다. B가 가장 최근에 등록한 글부터 보고 싶은데, 현재 머물러 있는 페이지 번호가 15페이지인 것이다.
+    
+    포인트는 여기에 있다. 페이지 번호를 '1'이 아닌 기존에 머물러 있던 '15'로 전달한다면, 
+    검색 조건에 해당하는 데이터가 있다고 하더라도, 중간에 등록된 글부터 보이거나, 조회 자체가 되지 않는 상황이 벌어질 수 있다.
+
+    ● 페이지 번호가 1로 유지되어야 하는 이유2
+    - 페이지당 출력할 데이터 개수가 10개라고 가정했을 때 
+    - A가 작성한 게시글은 총 20개이고 '작성자'를 A로 검색하면, A의 게시글은 1페이지와 2페이지에서는 볼 수 있으나
+    -  B가 기존에 머물러 있던, 3페이지를 기준으로 검색이 되어버리니 A의 게시글이 검색되지 않는 상황이 발생한 것이다.
+
+### 3.movePage() 함수 수정하기
+    SQL 쿼리의 검색 조건으로 사용하기 위해, 검색 영역의 searchType, keyword를 파라미터로 전달해 주어야 한다.
+
+    ● 페이지 이동
+
+        function movePage(page) {
+
+            // 1. 검색 form
+            const form = document.getElementById('searchForm');
+
+            // 2. drawPage()의 각 버튼에 선언된 onclick 이벤트를 통해 전달받는 page(페이지 번호)를 기준으로 객체 생성
+            const queryParams = {
+                page : (page) ? page : 1,
+                recordSize : 10,
+                pageSize : 10,
+                searchType : form.searchType.value,
+                keyword : form.keyword.value
+            }
+
+            /*
+                location.pathname : 리스트 페이지의 URI("/post/list.do")를 의미, 
+                new URLSearchParams(queryParams).toString() : queryParams의 모든 프로퍼티 (key-value)를 
+                쿼리 스트링으로 변환 URI + 쿼리 스트링에 해당하는 주소로 이동 (해당 함수가 리턴해주는 값을 브라우저 console에 찍어보자.)
+             */
+
+            location.href = location.pathname + '?' + new URLSearchParams(queryParams).toString(); 
+        }   
+
+        - 이제, list 페이지에서 searchType, keyword 를 세팅하고 검색해 보면, searchType, keyword가 파라미터로 함께 전송된다.
+      
+![param_result3](../img/param_result3.png)      
+
+        - 쿼리 스트링 파라미터 연결 시,
+          - locathost:8080/post/list.do?page=1&recordSize=10&pagSize=10&searchType=writer&keyword=테스터1000
+
+### 4.MyBatis 동적 SQL
+    마이바티스는 동적 SQL을 처리할 수 있는 몇 가지의 태그와 표현식을 제공한다. 
+    일반적으로 조건문과 반복문이 주로 사용된다. 
+    이 중에서도 조건문의 if, choose와 반복문의 foreach가 가장 많이 사용된다.
+
+    반복문의 foreach는 대표적으로 SQL 쿼리에서 WHERE 조건의 IN() 구문에 주로 사용되는데, 
+    이때 파라미터의 타입은 collection 타입이어야 한다.(List, Array, Map 등)      
+
+        ex) foreach문
+            <foreach collection="list" item="item" index="index" open="(" seperator="," cloas=")">#{item}</foreach>
+
+### 5.XML Mapper 수정
+    1. postMapper.xml
+     <!-- 게시글 검색 -->
+    <sql id="search">
+        <!-- 검색 키워드가 있을 때 -->
+        <if test="keyword != null and keyword != ''">
+            <choose>
+                <!-- 검색 유형이 있을 때 -->
+                <when test="searchType != null and searchType != ''">
+                    <choose>
+                        <when test="'title'.equals( searchType )">
+                            AND title LIKE CONCAT('%', #{keyword}, '%')
+                        </when>
+                        <when test="'content'.equals( searchType )">
+                            AND content LIKE CONCAT('%', #{keyword}, '%')
+                        </when>
+                        <when test="'writer'.equals( searchType )">
+                            AND writer LIKE CONCAT('%', #{keyword}, '%')
+                        </when>
+                    </choose>
+                </when>
+                
+                <!-- 전체 검색일 때 -->
+                <otherwise>
+                    AND (
+                           title LIKE CONCAT('%', #{keyword}, '%')
+                        OR content LIKE CONCAT('%', #{keyword}, '%')
+                        OR writer LIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    ● 코드 설명
+    keyword가 파라미터로 넘어온 경우에만 실행되는 검색 쿼리입니다. 
+    searchType이 선택된 경우에는 각각의 <where> 조건에 해당되는 LIKE 쿼리가 실행되고, 
+    전체 검색인 경우에는 <otherwise> 안에 선언한 LIKE 쿼리가 실행.
+
+    2. 검색용 SQL 조각 include
+    findAll 쿼리와 count 쿼리에서 search SQL을 include
+    <!-- 게시글 리스트 조회 -->
+    <select id="findAll" parameterType="com.study.common.dto.SearchDto"  resultType="com.study.domain.post.PostResponse">
+        SELECT
+            <include refid="postColumns" />
+        FROM 
+            tb_post
+        WHERE
+            delete_yn = 0
+            <include refid="search" />
+        ORDER BY
+            id DESC
+        LIMIT #{pagination.limitStar}, #{recordSize}
+    </select>
+
+    <!-- 게시글 수 카운팅 -->
+    <select id="count" parameterType="com.study.common.dto.searchDto" resultTpe="int">
+        SELECT 
+            COUNT(*)
+        FROM
+            tb_post
+        WHERE
+            delete_yn = 0
+            <include refid="search" />
+    </select>
+
+### 6.검색 기능 테스트
+    전체 검색과 제목을 기준으로 검색 기능을 테스트한 결과이다.
+
+![findAll_keyword_1000](../img/findAll_keyword_1000.png)
+
+![count_query_test](../img/count_query_test.png)
+
+![findAll_query_test](../img/findAll_query_test.png)
+
+### 7.keryword 검색 조건 유지하기
+    모든 경우에서 문제없이 검색 기능이 작동하고 있다. 하지만 검색 버튼을 클릭하면 검색 조건이 풀려버린다. 
+    이를 해결하기 위해 쿼리 스트링 파라미터를 세팅해 주는 기능이 필요하다.
+
+    ● list.html
+    - setQueryStringParams() 함수를 추가
+    - onload() 함수에서 리스트 데이터를 조회하기 전 해당 함수를 호출.
+
+        // 페이지가 로드되었을 때, 딱 한 번만 함수를 실행
+        window.onload = () => {
+
+            setQueryStringParams();
+
+            findAllPost();
+        }
+
+        // 쿼리 스트링 파라미터 셋팅
+        function setQueryStringParams() {
+
+            if (!location.search) {
+                return false;
+            }
+
+            const form = document.getElemnentById('searchForm');
+
+            new URLSearchParams(location.search).forEach((value, key) =>
+            {
+                if (form[key]) {
+                    form[key].value = value;
+                }
+            })
+        }
+
+        ● 로직 해석
+        - JS에서 location 객체의 search를 이용하면 쿼리 스트링 파라미터를 조회할 수 있다.
+
+        - form은 리스트 페이지의 searchForm을 의미하며, 
+        new URLSearchParams()함수의 인자로 현재 페이지의 쿼리 스트링을 전달해서 쿼리 스트링 문자열에 포함된 각 파라미터(key = value)를 객체화한 후, 
+        searchType, keyword의 값을 searchForm에 세팅한다.
+    
+### 8.이전 페이지 정보 유지
+    마지막으로 게시글을 '수정/삭제' 하거나, 상세 또는 수정 페이지에서 '뒤로' 버튼을 클릭했을 때 이전 페이지 정보가 유지되도록 해주면 페이징과 검색 처리는 모두 끝이 난다.
+
+    1. 리스트 페이지 drawList() 함수 수정
+    리스트 페이지에서 상세 페에지로 이동할 때 쿼리 스트링 파라미터를 전달하도록 list.html의 drawList()를 다음과 같이 변경해 주자.
+
+    ● drawList() 수정
+    // 리스트 HTML draw
+    function drawList(list, num) {
+    
+        // 1. 렌더링 할 HTML을 저장할 변수
+        let html = '';
+    
+        /*
+            1. 기존에 타임리프(Thymeleaf)를 이용해서 리스트 데이터를 그리던 것과 유사한 로직
+            기존에는 게시글 번호를 (전체 데이터 수 - loop의 인덱스 번호)로 처리했으나, 
+            현재는 (전체 데이터 수 - ((현재 페이지 번호 - 1) * 페이지당 출력할 데이터 개수))로 정밀히 계산
+         */
+        list.forEach(row => {
+            html += `
+                <tr>
+                    <td><input type="checkbox" /></td>
+                    <td>${row.noticeYn === false ? num-- : '공지'}</td>
+                    <td class="tl"><a href="javascript:void(0);" onclick="goViewPage(${row.id});">${row.title}</a></td>
+                    <td>${row.writer}</td>
+                    <td>${dayjs(row.createdDate).format('YYYY-MM-DD HH:mm')}</td>
+                    <td>${row.viewCnt}</td>
+                </tr>
+            `;
+        })
+    
+        // 3. id가 "list"인 요소를 찾아 HTML을 렌더링
+        document.getElementById('list').innerHTML = html;
+    }
+
+    ● 코드 해석
+    - <td class="tl"><a href="javascript:void(0);" onclick="goViewPage(${row.id});">${row.title}</a></td>
+      - 기존에는 제목을 클릭했을 떼, <a> 태그의 href 속성을 이용해서 게시글  상세 페이지로 이동하는 구조였다. 
+      변경된 코드에서는 href 속성을 무효화시키고, onclick 이벤트로 goViewPage() 함수를 호출한다.
+
+    2. 리스트 페이지에 goViewPage() 함수 선언하기
+
+        // 게시글 상세 페이지로 이동
+        function goViewPage(id) {
+            const queryString = (location.search) ? location.search + '&id=${id}` : `?id=${id}`;
+            location.href = '/post/view.do' + queryStirng;
+        }
+
+        ● 코드 해석
+        location.search를 이용해서 게시글 번호(id)와 쿼리 스트링 파라밑를 상세 페이지로 함께 전달한다.
+
+        해당 함수에서 queryString에 삼항 연산자가 사용되었는데, 처음 리스트로 접근 했을때는 쿼리 스트링이 비어있는 상태가 되며, 
+        이는 현재 페이지가 1페이지임을 의미한다. 이떄 location.search는 빈 문자열('')을 return하기 때문에 게시글 번호(id)만 쿼리 스트링으로 전달하고, 
+        이외의 경우에는 페이지 정보, 검색 조건, 게시글 번호(id)를 함께 전달한다.
+
+    3. 상세 페이지 버튼 수정
+    이제, 상세 페이지에서 '수정' 버튼과 '뒤로' 버튼 클릭 시, 이전 페이지 정보가 유지되도록 구현.
+
+    ● view.html
+    <p class="btn_set">
+        <button type="button" onclick="goWritePage();" class="btns btn_bdr4 btn_mid">수정</button>
+        <button type="button" onclick="deletePost();" class="btns btn_bdr1 btn_mid">삭제</button>
+        <button type="button" onclick="goListPage();" class="btns btn_bdr3 btn_mid">뒤로</button>
+    </p>
+
+    4. 상세 페이지 goWritePage() 함수 선언
+    
+        // 게시글 수정 페이지로 이동
+        function goWritePage() {
+            location.href = '/post/write.do' + location.seacrh;
+        }
+
+        ● 코드 해석
+        앞에서 했듯이 location.search 는 URL의 쿼리 스트링을 return해준다.
+        리스트 페이지에서 전달받은 쿼리 스트링을 있는 그대로 수정 페이지로 전달해 주면 되기 때문에, 
+        URI 경로(Path)만 view.do에서 write.do로 변경되고, 나머지 쿼리 스트링은 그대로 가지고 간다.
+
+    5. 상세 페이지에 goListPage() 함수 선언   
+    
+        // 게시글 리스트 페이지로 이동
+        function goListPage() {
+            const queryStirng = new URLSearchParams(location.search);
+            queryString.delete('id');
+            location.href = '/post/list.do' + '?' + queryString.toStirng();
+        }
+
+        ● 코드 해석
+        new URLSearchParams()를 이용해서 쿼리 스트링을 객체화한다. 
+        리스트 페이지는 게시글 번호(id)를 필요로 하지 않기 때문에, 
+        delete() 함수를 이용해서 게시글 번호(id)를 삭제한 후 나머지 쿼리 스트링(이전 페이지 정보)을 리스트 페이지로 전달.
+
+    6. 상세 페에지 deletePost() 함수 수정
+
+        // 게시글 삭제
+        function deletePost() {
+
+            const id = [{$post.id}];
+
+            if (!confirm(id + '번 게시글을 삭제할까요?')) {
+                return false;
+            }
+
+            let inputHtml = '';
+
+            new URLSearchParams(location.search).forEach((value, key)) => {
+                inputHtml += '<input type="hidden" name="${key}" value="${value}" />';
+            }
+
+            const formHtml = `
+            <form id="deleteForm" action="/post/delete.do" method="post">
+                ${inputHtml}
+            </form>
+        
+            const doc = new DOMParser().parseFromString(formHtml, 'text/html');
+            const form = doc.body.firstChild;
+            document.body.append(form);
+            document.getElementById('deleteForm').submit();
+
+        }          
+
+        ● 코드 해석
+        기존에는 deleteForm을 그릴 때 게시글 번호만 hidden으로 넘겼는데, 지금은 전달받은 쿼리 스트링 파라미터를 전부inputHtml에 담아서 form에 추가한다.
+
+![deleteForm_structure](../img/deleteForm_structure.png)  
+
+    7. PostController의 deletePost() 메서드 수정
+        게시글을 삭제하면 게시글 번호(id)와 이전 페이지 정보(쿼리 스트링)가 함께 전송되기 때문에, 
+        게시글이 삭제된 후에 이전 페이지 정보가 유지될 수 있도록 컨트롤러 구조를 변경.
+
+        // 게시글 삭제
+        @PostMapping("/post/delete.do")
+        public String deletePost(@RequestParam final Long id, final SearchDto queryParams, Model model) {
+
+            postService.deletePost(id);
+            MessageDto message = new MessageDto("게시글 삭제가 완료되었습니다.", "/post/list.do", RequestMethod.GET, queryParamsToMap(queryParams));
+
+            return showMessageAndRedirect(message, model);
+    }
+
+    8. PostController에 queryParamsToMap() 메서드 추가.
+    
+        // 쿼리 스트링 파라미터를 Map에 담아 반환.
+        private Map<Stirng, Object> queryParamsToMap(final SearchDto queryParams) {
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("page", queryParams.getPage());
+            data.put("recordSize", queryParams.getRecordSize());
+            data.put("pageSize", queryParams.getPageSize());
+            data.put("keyword", queryParams.getKeyword());
+            data.put("searchType", queryParams.getSearchType());
+
+            return data;
+        }
+
+        ● 코드 해석
+        해당 메서드는 deletePost()에서 수집한 이전 페이지 정보(queryParams의 모든 멤버)를 Map에 담아 return 해주는 역할을 한다.
+        MessageDto의 생성자는 마지막 파라미터로 Map을 전달받아 객체를 생성하기 때문에 컨트롤러에 해당 메서드를 추가해 주었다.
+
+        참고로, 해당 기능은 컨트롤러에서 alert 메시지 처리하기 기능의 연장선이다.
+
+    9. 이전 페이지 정보 유지 테스트
+ 
+![deleteForm_test](../img/deleteForm_test.png)
+
+    - 15페이지 최상단의 180번 게시글 상세 페이지로 이동
+    
+![deleteForm_test2](../img/deleteForm_test2.png)
+
+    - 상세 페이지에서 '뒤로' 버튼을 클릭하면, 상세 페이지로 이동하기 전의 검색 조건과 페이지 번호가 유지된다.
+
+![deleteForm_test3](../img/deleteForm_test3.png)
+
+    - 다음은 전체 검색으로 '테스트77'을 검색한 후 마지막(36) 페이지로 이동.
+    
+![deleteForm_test4](../img/deleteForm_test4.png)    
+
+    - 36페이지의 2번 게시글 상세 페이지 삭제
+     
+![deleteForm_test5](../img/deleteForm_test5.png)
+
+    - 2번 게시글이 삭제된 상태로, 이전 페이지 정보가 정상적으로 유지된다.
+  
+![deleteForm_test6](../img/deleteForm_test6.png)  
