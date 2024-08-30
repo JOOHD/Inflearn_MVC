@@ -398,7 +398,7 @@
         <delete id="deleteById" parameterType="long">
             UPDATE tb_comment
             SET
-                delete_yn = 1
+                delete_yn = 1   // (0 = 삭제x, 1 = 삭제o)
             WHERE
                 id = #{id}
         </delete>
@@ -433,7 +433,7 @@
         @Transactional
         public Long saveComment(final CommentRequest params) {
             commentMapper.save(params);
-            return params.getId();
+            return params.getId(); // DB에서 자동 생성된 ID를 반환
         }
 
         /**
@@ -477,6 +477,127 @@
         }
 
     }
+
+### REST API의 댓글 등록
+    @RestController, jQuery, Ajax 를 이용해서 화면의 움직임(이동 또는 새로고침)없이 데이터를 주고받는 비동기 처리를 구현해 보자.
+
+    1. 댓글 컨트롤러 클래스 생성
+    REST Controller는 HTML이 아닌 데이터 자체를 리턴한다.
+    댓글 데이터의 CRUD는 전부 게시글 상세 페이지에서 이루어지기 때문에 화면을 따로 구성할 필요 없이 데이터만 주고 받으면 된다.
+
+    @RestController
+    @RequiredArgConstructor
+    public class CommentApiController {
+
+        private final CommentService commentService;
+
+        // 신규 댓글 생성
+        PostMapping("/posts/{postId}/comments")
+        public CommentResponse saveComment(@PathVariable final Long postId, @RequestBody final CommentRequest params) {
+            Long id = commentService.saveComment(params);
+            return commentService.findCommentById(id);
+        }
+    }
+
+    ● GPT code
+
+    @RestController
+    @RequiredArgsConstructor
+    @RequestMapping("/comments")
+    public class CommentController {
+
+        private final CommentService commentService;
+
+        @PostMapping
+        public ResponseEntity<Long> saveComment(@RequestBody CommentRequest params) {
+            Long savedId = commentService.saveCommetn(params);
+            return ResponseEntity.ok(savedId);
+        }
+    }
+
+    2. 상세 페이지 - 댓글 작성 영역 추가하기
+    댓글 CRUD는 모두 상세 페이지에서 처리되기 깨문에 view.html에 댓글 영역을 추가해야 된다. view.html의 content 영역에서 수정/삭제/뒤로 버튼을 감싸고 있는 <p>태그 뒤에 코드를 추가해보자.
+    
+    <!--/* 댓글 작성 */-->
+    <div class="cm_write">
+        <fieldset>
+            <legend class="skipinfo">댓글 입력</legend>
+            <div class="cm_input">
+                <p><textarea id="content" 
+                             name="content" 
+                             onkeyup="countingLength(this);" 
+                             cols="90" rows="4" 
+                             placeholder="댓글을 입력해 주세요.">
+                             </textarea></p>
+                <span>
+                <button type="button" class="btns" onclick="saveComment();">등 록</button> 
+                <i id="counter">0/300자</i></span>
+            </div>
+        </fieldset>
+    </div>
+
+    3. 상세 페이지 - JS 함수 작성하기
+    
+    // 댓글에 입력된 글자 수를 카운팅, 300 초과하는 경우, 다시 문자열 추출해서 세팅
+    function countingLength(content) {
+        if (content.value.length > 300) {
+            alert('댓글을 300자 이하로 입력해 주세요.');
+            content.value = content.value.substring(0, 300);
+            content.focus();
+        }
+        document.getElementById('counter').innerText = content.value.length + '/300자';
+    }
+
+    // DB 댓글 저장, 유효성 검사한 후 data 서버에 전달.
+    function saveComment() {
+
+        const content = document.getElementById('content');
+        isValid(content, '댓글');
+
+        const postId = [[ ${post.id} ]];
+        const params = {
+            postId : postId,
+            content : content.value;
+            writer : '홍길동'
+        }
+
+        $.ajax({
+            url : '/posts/${postId}/comments',
+            type : 'post',
+            contentType : 'application/json; charset=utf-8', 
+            dataType : 'json', 
+            data : JSON.stringfy(params),
+            async : false,  
+            success : function (response) {
+                console.log(response);
+            },
+            error : function (request, status, error) {
+                console.log(error)
+            }
+        })
+    }
+
+    data : 
+    서버로 전송할 데이터(파라미터)를 의미합니다. 우리는 생성할 댓글  정보를 params라는 이름의 객체(JSON)에 담아 서버로 전송하는데요. JSON.stringify( ) 함수로 params 객체를 JSON 문자열로 변환해서 전송합니다.
+
+    async : 
+    Ajax는 비동기 처리 방식이기 때문에 로직의 실행 순서를 보장할 수 없습니다. 해당 옵션의 기본 값은 "true"인데요. async를 "false"로 설정해주면  Ajax 내의 로직을 순차적으로 실행할 수 있습니다.쉽게 말해, true인 경우에는 서버에서 응답이 내려오지 않아도 다음 로직이 실행되고, false인 경우에는 서버에서 응답이 내려온 후에 다음 로직이 실행됩니다.
+
+    4. 댓글 등록 테스트
+    
+    리스트 1페이지 최상단에 위치한 32,000번 게시글에 댓글을 등록.
+
+![comment_test](../grammer_sum/img/comment_test.png)    
+
+    다음은 view.html의 saveComment()의 params와 JSON.stringify(params)를 브라우저 개발자 도구의 console에 출력해 보았다.
+
+    서버로 데이터를 전송하는 시점에 JSON.stringify()를 이용해서 객체(params)를 JSON 문자열로 변경한다.
+
+![JSON.stringify](../grammer_sum/img/JSON.stringify.png)
+
+    서버에 요청을 보내면, @PathVariable 파라미터인 postId는 게시글의 PK(32356)를 수집하고, JSON 문자열로 넘어온 댓글 정보는 @RequestBody에 의해 CommentRequest 클래스의 객체인 params에 매핑됩니다.
+    
+    이때 JSON 문자열의 각 key와 클래스의 멤버 변수명은 동일해야 된다.
 
 
 
