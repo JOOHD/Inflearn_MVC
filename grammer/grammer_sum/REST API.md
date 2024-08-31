@@ -99,6 +99,20 @@
     
     ● @ResponseBody
 
+    목적 : 컨트롤러 메서드가 반환하는 데이터를 HTTP 응답 Body(본문)으로 직접 전송할 때 사용한다.
+
+    동작 방식 : 메서드가 반환하는 객체를 JSON 또는 XML과 같은 특정 포맷으로 직렬화(Serialize)하여 HTTP 응답 본문에 포함시킨다.
+
+    사용 시점 : 주로 REST API에서 데이터를 클라이언트로 전송할 때 사용한다.
+
+    ● @RequestBody
+
+    목적 : HTTP 요청 본문에 담긴 데이터를 컨트롤러 메서드의 파라미터로 직접 전달할 때 사용.
+
+    동작 방식 : 요청 본문에 있는 JSON, XML 등의 데이터를 자바 객체로 역직렬화 하여 메서드 파라미터에 바인딩한다.
+
+    사용 시점 : 주로 클라이언트에서 데이터를 서버로 전송할 때 사용하며, 이 데이터가 요청 본문에 포함될 때 사용한다. 
+
     @Controller 
     public class RestApiTestController {
 
@@ -599,6 +613,163 @@
     
     이때 JSON 문자열의 각 key와 클래스의 멤버 변수명은 동일해야 된다.
 
+![saveComment_debugging](../grammer_sum/img/saveComment_debugging.png)    
+    서버의 모든 로직이 실행되면 Ajax의 success() 함수가 실행되며, 생성된 게시글 정보가 브라우저 콘솔에 출력된다.
+
+![success_function](../grammer_sum/img/success_function.png)    
+
+    테이블에도 정상적으로 저장되었다.
+
+![tb_comment_select](../grammer_sum/img/tb_comment_select.png)    
+
+### REST API의 목록 기능
+    게시글의 경우, 게시글의 생성/수정/삭제되는 시점에 리스트 페이지로 리다이렉트 하도록 처리했다.
+
+    댓글은 등록/수정/삭제된 시섬에 페이지를 이동하거나 새로고침 하지 않고,
+    테이블에서 SELECT 한 결과 데이터를 댓글 영역에 다시 렌더링 한다. 
+
+    1. 댓글 API Controller - 메서드 추가하기
+
+    // 댓글 리스트 조회
+    @GetMapping("/posts/{postId}/comments")  
+    public LiST<CommentResponse> findAllComment(@PathVariable final Long postId) {
+        return commentService.findAllComment(postId); // ajax의 response
+    }
+
+    2. 상세 페이지 - 댓글 렌더링 영역 추가하기
+    view.html의 content 영역에서 댓글 작성 영역(<div class="cm_write"></div>)
+
+    <!-- 댓글 렌더링 영역 -->
+    <div class="cm_list"></div>
+
+    3. 상세 페에지 - JS 함수 작성하기 & findAllComment() 함수 수정
+    
+    // 페이지가 로딩되는 시점에 단 한 번만 실행되는 함수.
+    window.onload = () => {
+        findAllComment();
+    }
+
+    // 전체 댓글 조회
+    function findAllComment() {
+
+        const postId = [[ ${post.id} ]];
+
+        $.ajax({
+            url : '/posts/${postId}/comments',
+            type : 'GET',
+            dataType : 'JSON',
+            async : false,
+            success : function (response) {
+                console.log(response);
+
+                // 1. 조회된 데이터가 없는 경우
+                if (!response.length) {
+                    document.querySelector('.cm_list').innerHTML = '<div class="cm_none"><p>등록된 댓글이 없습니다.</p></div>';
+                    return false;
+                }
+
+                // 2. 렌더링 할 HTML을 저장할 변수
+                let commetnHtml = '';
+
+                // 3. 댓글 HTML 추가
+                response.forEach(row => {
+                    commentHtml += '
+                        <div>
+                            <span class="writer_img"><img src="/images/default_profile.png" width="30" height="30" alt="기본 프로필 이미지"/></span>
+                            <p class="writer">
+                                <em>${row.writer}</em>
+                                <span class="date">${dayjs(row.createdDate).format('YYYY-MM-DD HH:mm')}</span>
+                            </p>
+                            <div class="cont"><div class="txt_con">${row.content}</div></div>
+                            <p class="func_btns">
+                                <button type="button" class="btns"><span class="icons icon_modify">수정</span></button>
+                                <button type="button" class="btns"><span class="icons icon_del">삭제</span></button>
+                            </p>
+                        </div>
+                    ';    
+                })
+
+                // 4. class가 "cm_list"인 요소를 찾아 HTML을 렌더링
+                document.querySelector('.cm_list').innerHTML = commentHtml;
+            },
+            error : function (request, status, error) {
+                console.log(error)
+            }
+        })
+    }
+
+    success() 함수의 response는 CommentApiController의 findAllComment()가 리턴하는 List 타입의 객체배열입니다. 이제 response를 이용해서 댓글 HTML을 그린 후 화면에 렌더링해주면 된다.
+
+![openPostList](../grammer_sum/img/openPostList.png)
+
+    게시글 리스트와 같은 동기 처리 방식은 컨트롤러에서 HTML으로 데이터를 전달해서 처리하지만, 비동기 처리 방식은 화면 내에서 ajax를 이용해 실시간으로 서버와 데이터를 주고 받을 수 있다.
+
+    findAllComment()의 response.forEach()에서 row는 response에 담긴 각각의 댓글 객체를 의미한다. response를 순환하며 commentHtml에 댓글 HTML을 추가한 후 div.cm_list에 렌더링 한다.
+
+    4. 댓글 조회 테스트
+    
+    상세 페이지에 접속한 후 F12를 눌러 브라우저 개발자 도구를 열어보면, console에 댓글(response)이 출력되는 것을 확인.
+
+![comment_response](../grammer_sum/img/comment_response.png)
+
+    5. saveComment() 출력 테스트
+
+    이제, 게시글 상세 페이지로 접속해 보면 등록된 댓글이 출력되는 것을 확인.
+
+![comment_y](../grammer_sum/img/comment_y.png)
+
+    다음은 등록된 댓글이 없는 경우.
+![comment_n](../grammer_sum/img/comment_n.png)
+
+    마지막으로 댓글 저장 함수의 로직을 조감만 손봐주면 된다. 
+    view.html의 saveComment()를 수정
+
+    // 댓글 저장
+    function saveComment() {
+
+        const content = document.getElementById('content');
+        isValid(content, '댓글');
+
+        const postId = [[ ${post.id} ]];
+        const params =  {
+            postId : postId,
+            content : content.value,
+            writer : '홍길동'
+        }
+
+        $.ajax({
+            url : '/posts/${postId}/comments',
+            type : 'post',
+            contentType : 'application/json; charset=utf-8',
+            dataType : 'json',
+            data : JSON.sringify(params),
+            async : false,
+            success : function (response) {
+                alert('저장되었습니다.');
+                content.value = '';
+                document.getElemetById('counter').innerTest = '0/300자';
+                findAllComment();
+            },
+            error : function (request, status, error) {
+                console.log(error);
+            }
+        })
+    }
+
+    Ajax의 success()함수의 내부 로직만 변경되었다. 댓글 저장이 완료되면 사용자에게 저장 완료 메시지를 보여주고, 입력했던 댓글 내용과 입력된 자릿수를 초기화한 후 findAllComment()를 호출해서 화면에 댓글을 다시 렌더링 한다.
+
+### 비동기 vs 동기 
+    동기 처리 : 컨트롤러에서 데이터와 화면 두 가지를 동시에 처리,
+    비동기 처리 : 화면 내에서 데이터의 처리(CRUD)를 실시간으로 서버에 요청.
+
+    동기 방식은 화면의 움직임(페이지 이동 또는 새로고침)이 발생한다. 화면의 움직임은 HTML, CSS, JS 코드가 처음부터 끝까지 다시 렌더링을 하는 것을 의미.(리소스 낭비가 심하다.)
+
+    반대로 비동기 방식의 장점은 페이지를 다시 로딩하지 않아도 된다.
+    댓글의 경우, 서버에 필요한 데이터를 요청하고, Javascript로 HTML 코드를 직접 그린 후에 DOM에 코드를 렌더링 하는 방식이다.
+
+    즉, 페이지를 처음부터 로딩하지 않고 최소한의 영역만 변경(리소스 낭비 적음, 속도 유리.)
+    
+    
 
 
 
