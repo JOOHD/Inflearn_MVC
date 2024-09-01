@@ -113,26 +113,26 @@
 
     사용 시점 : 주로 클라이언트에서 데이터를 서버로 전송할 때 사용하며, 이 데이터가 요청 본문에 포함될 때 사용한다. 
 
-    @Controller 
-    public class RestApiTestController {
+        @Controller 
+        public class RestApiTestController {
 
-        @GetMapping("/members")
-        @ResponseBody // public @ResponseBody List<Map<String, Object>> findAllMember()와 같이 리턴 타입 앞에도 선언 가능
-        public List<Map<String, Object>> findAllMember() {
+            @GetMapping("/members")
+            @ResponseBody // public @ResponseBody List<Map<String, Object>> findAllMember()와 같이 리턴 타입 앞에도 선언 가능
+            public List<Map<String, Object>> findAllMember() {
 
-            List<Map<String, Object>> members = new ArrayList<>();
+                List<Map<String, Object>> members = new ArrayList<>();
 
-            for (int i = 1; i <= 20; i++) {
-                Map<String, Object> member = new ArrayList<>();
-                member.put("id", i);
-                member.put("name", i + "번 개발자");
-                member.put("age", 10 + i);
-                members.add(member);
+                for (int i = 1; i <= 20; i++) {
+                    Map<String, Object> member = new ArrayList<>();
+                    member.put("id", i);
+                    member.put("name", i + "번 개발자");
+                    member.put("age", 10 + i);
+                    members.add(member);
+                }
+
+                return members;
             }
-
-            return members;
         }
-    }
 
     - findAllMember() 가 return 하는 members 데이터가 출력됩니다.
     
@@ -143,17 +143,17 @@
     ● @RestController
     클래스 레벨에 선언할 수 있으며, @RestController가 붙은 컨트롤러의 모든 메서드에는 자동으로 @ResponseBody가 적용된다.
 
-    @RestController
-    @RequiredArgsConstructor
-    public class RestApiTestController {
+        @RestController
+        @RequiredArgsConstructor
+        public class RestApiTestController {
 
-        private final PostService postService;
+            private final PostService postService;
 
-        @GetMapping("/post")
-        public PagingResponse<PostResponse> findAllPost() {
-            return postService.findAllPost(new SearchDto());
+            @GetMapping("/post")
+            public PagingResponse<PostResponse> findAllPost() {
+                return postService.findAllPost(new SearchDto());
+            }
         }
-    }
 
     브라우저에서 해당 주소로 접속해 보면, 객체 배열인 "list"에는 각각의 게시글 데이터가 담겨있고, "pagination"에는 계산된 페이지 정보가 담겨있는 걸 확인할 수 있다.
 
@@ -161,28 +161,28 @@
 
 ![findAllPost_tool](../grammer_sum/img/findAllPost_tool.png)
 
-### RESTful API의 Response는 어떤 형식
+### RESTful API Response는 어떤 형식
     restful api 응답 형식에는 표준이 존재하지는 않다.
     표준은 존재하지 않지만 response 형식은 크게 2가지 형태로 사용된다.
 
     ● HTTP Status Code + JSON Body를 사용.
 
-    // GET 요청으로 단일 데이터를 가져올 때
-    HTTP/1.1 200
-    Content-Type : application/json
-    {
-        "id": 11,
-        "title" : "Effective Java",
-        "contents" : "Java Platform Best Practices Guide"
-    }    
+        // GET 요청으로 단일 데이터를 가져올 때
+        HTTP/1.1 200
+        Content-Type : application/json
+        {
+            "id": 11,
+            "title" : "Effective Java",
+            "contents" : "Java Platform Best Practices Guide"
+        }    
 
-    // POST 요청으로 데이터를 생성한 결과
-    HTTP/1.1 201
-    Location : /v1/book/11
-    Content-Type : application/json
-    {
-        "messaeg" : "The Book was created suceessfully"
-    }
+        // POST 요청으로 데이터를 생성한 결과
+        HTTP/1.1 201
+        Location : /v1/book/11
+        Content-Type : application/json
+        {
+            "messaeg" : "The Book was created suceessfully"
+        }
 
     ● JSON Body만 사용하는 방식 (HTTP Status Code는 항상 200)
     두 번째 방식은 HTTP 상태 코드를 항상 200으로 응답하며, json body 만을 통해 성공 또는 오류 응답을 판단하고, 해당되는 데이터를 함께 반환하는 방식이다.
@@ -215,7 +215,7 @@
         "message" : "custom message"
     }
 
-### REST API의 댓글 CRUD 처리
+### REST API 댓글 CRUD 처리
     게시판에 댓글 기능을 구현해 보고, Mapper, Service에 댓글 CRUD 로직을 작성해 두고, @RestController와 jQuery의 Ajax를 이용해서 비동기 방식의 화면(HTML) 처리를 진행.
 
     1. 댓글 테이블 구조
@@ -231,16 +231,16 @@
 
     2. 댓글 테이블 생성하기
     
-    create table tb_comment (
-        id bigint not null auto_increament comment '댓글 번호(PK)',
-        post_id bigint not null comment '게시글 번호(FK)',
-        content varchar(1000) not null comment '내용',
-        writer varchar(20) not null comment '작성자',
-        delete_yn tinyint(1) not null comment '삭제 여부',
-        created_date datetime not null default CURRENT_TIMESTAMP comment '생성일',
-        modified_date datetime comment '최종 수정일시',
-        primary key(id)
-    ) comment '댓글';
+        create table tb_comment (
+            id bigint not null auto_increament comment '댓글 번호(PK)',
+            post_id bigint not null comment '게시글 번호(FK)',
+            content varchar(1000) not null comment '내용',
+            writer varchar(20) not null comment '작성자',
+            delete_yn tinyint(1) not null comment '삭제 여부',
+            created_date datetime not null default CURRENT_TIMESTAMP comment '생성일',
+            modified_date datetime comment '최종 수정일시',
+            primary key(id)
+        ) comment '댓글';
 
     3. 제약 조건(Constrain) 추가하기
     
@@ -492,7 +492,7 @@
 
     }
 
-### REST API의 댓글 등록
+### REST API 댓글 등록
     @RestController, jQuery, Ajax 를 이용해서 화면의 움직임(이동 또는 새로고침)없이 데이터를 주고받는 비동기 처리를 구현해 보자.
 
     1. 댓글 컨트롤러 클래스 생성
@@ -622,7 +622,7 @@
 
 ![tb_comment_select](../grammer_sum/img/tb_comment_select.png)    
 
-### REST API의 목록 기능
+### REST API 목록 기능
     게시글의 경우, 게시글의 생성/수정/삭제되는 시점에 리스트 페이지로 리다이렉트 하도록 처리했다.
 
     댓글은 등록/수정/삭제된 시섬에 페이지를 이동하거나 새로고침 하지 않고,
@@ -637,6 +637,7 @@
     }
 
     2. 상세 페이지 - 댓글 렌더링 영역 추가하기
+
     view.html의 content 영역에서 댓글 작성 영역(<div class="cm_write"></div>)
 
     <!-- 댓글 렌더링 영역 -->
@@ -699,6 +700,46 @@
     }
 
     success() 함수의 response는 CommentApiController의 findAllComment()가 리턴하는 List 타입의 객체배열입니다. 이제 response를 이용해서 댓글 HTML을 그린 후 화면에 렌더링해주면 된다.
+
+    ● 참고 - 템플릿 리터럴 (Template Literals)
+    동적으로 HTML 문자열을 생성하는 방식이다. 
+    이 방법을 통해 HTML 콘텐츠를 문자열로 조합하여 페이지에 삽입할 수 있다.
+
+    개요
+    - 템플릿 리터럴은 Javascript에서 멀티라인 문자열과 문자열 삽입을 더 쉽게 할 수 있게 해주는 문법이다.
+
+    - **백틱("")**을 사용해서 문자열을 감싸고, '${}' 구문을 통해 변수나 표현식을 문자열에 삽입할 수 있다.
+
+    특징
+    1. 멀티라인 문자열
+       - 템플릿 리터럴을 사용하면 문자열을 여러 줄로 나눌 수 있다.
+    2. 문자열 삽입
+       - '${}' 구문을 사용하여 변수 값을 문자열에 삽입할 수 있다. 이는 문자열 연결보다 훨씬 간편하다.
+
+       ex)  
+       let productHtml = '';
+       products.forEach(product => {
+           productHtml += '
+                <div class="product">
+                    <h3>${produc.name}</h3>
+                    <p>${product.description}</p>
+                    <span>${product.price}</span>
+                </div>
+            ';    
+       });
+
+    ● 템플릿 리터럴 사용
+        - "---" (백틱으로 감싼 문자열) 안에서 HTML 코드를 작성하고, '${}'
+        구문으로 product.name, product.descriptioin, product.price 와 같은 변수를 삽입한다.
+
+    ● forEach 메서드
+        - products 배열의 각 product 객체를 순회하며, 각 객체의 속성 값을 사용해 HTML 코드를 생성한다.
+        
+    ● HTML 문자열 생성
+        - productHtml 문자열에 각 produc에 대한 HTML 코드가 누적된다.
+        이 문자열은 나중에 innerHTML 속성을 통해 웹 페이지의 특정 요소에 삽입된다.
+
+    템플릿 리터럴을 사용하면 HTML 콘텐츠를 동적으로 생성하고 삽입하는 작업이 더 간결하고 직관적으로 수행될 수 있다.    
 
 ![openPostList](../grammer_sum/img/openPostList.png)
 
@@ -768,13 +809,181 @@
     댓글의 경우, 서버에 필요한 데이터를 요청하고, Javascript로 HTML 코드를 직접 그린 후에 DOM에 코드를 렌더링 하는 방식이다.
 
     즉, 페이지를 처음부터 로딩하지 않고 최소한의 영역만 변경(리소스 낭비 적음, 속도 유리.)
+
+### REST API 수정 기능 (Modal Layer Popup 이용)
+    1. 댓글 API 컨트롤러 - 메서드 추가
     
+    // 댓글 상세정보 조회
+    @GetMapping("/posts/{postId}/comments/{id}")
+    public CommentResponse findCommentById(@PathVariable final Long postId, @PathVariable final Long id) {
+        return commentService.findCommentById(id);
+    }
+    
+    - REST API 설계 규칙에서 Document에 해당되는 기능으로, 특정 게시글(postId)에 등록된 모든 댓글 중 PK(id)에 해당되는 댓글을 조회한다.
+     
+    - 댓글을 수정할 때 사용자에게 기존 댓글 정보를 보여주는 용도이다.
+
+    // 기존 댓글 수정
+    @PatchMapping("/posts/{postId}/comments/{id}")
+    public CommentResponse updateComment(@PathVariable final Long postId, @PathVariable final Long id, @RequestBody final CommentRequest params) {
+        commentService.updateComment(params);
+        return commentService.findCommentById(id);
+    }
+
+    - 댓글 수정이 완료되면 수정된 댓글 정보(객체)를 리턴해준다.
+    saveComment()와 마찬가지로 @RequestBody를 이용해서 JSON 문자열로 넘어오는 댓글 정보를 CommentRequest 객체의 각 멤버 변수에 매핑(바인딩)한다.
+
+    2. 댓글 수정은 "Layer Popup" 또는 "Modal" 로 불리는 팝업을 사용.
+    
+    <!--/* 댓글 수정 popup */-->
+    <div id="commentUpdatePopup" class="popLayer">
+        <h3>댓글 수정</h3>
+        <div class="pop_container">
+            <table class="tb tb_row tl">
+                <colgroup>
+                    <col style="width:30%;" /><col style="width:70%;" />
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <th scope="row">작성자<span class="es">필수 입력</span></th>
+                        <td><input type="text" id="modalWriter" name="modalWriter" placeholder="작성자를 입력해 주세요." /></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">내용<span class="es">필수 입력</span></th>
+                        <td><textarea id="modalContent" name="modalContent" cols="90" rows="10" placeholder="수정할 내용을 입력해 주세요."></textarea></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="btn_set">
+                <button type="button" id="commentUpdateBtn" class="btns btn_st2">수정</button>
+                <button type="button" class="btns btn_bdr2" onclick="closeCommentUpdatePopup();">취소</button>
+            </p>
+        </div>
+        <button type="button" class="btn_close" onclick="closeCommentUpdatePopup();"><span><i class="far fa-times-circle"></i></span></button>
+    </div>
+
+    3. Layer Popup - JS 함수 작성
+    
+    // 댓글 수정 팝업 open
+    function openCommentUpdatePopup(id) {
+
+        const postId = [[ ${post.id} ]];
+
+        $.ajax({
+            url : '/post/${postId}/comments/${id}',
+            type : 'GET',
+            dataType : 'JSON',
+            async : false,
+            success : function (response) {
+                document.getElementById('modalWriter').value = response.writer;
+                document.getElementById('modalContent').value = response.content;
+                document.getElementById('commentUpdateBtn').setAttribute('onclick', `updateComment(${id})`);
+                layerPop('commentUpdatePopup');
+            },
+            error : function (request, status, error) {
+                console.log(error)
+            }   
+        })
+    }
+
+    // 댓글 수정 팝업 close
+    function closeCommentUpdatePopup() {
+        documnet.querySelectorAll('#modalContent, #modalWriter').forEach(element => element.value = '');
+        document.getElementById('commentUpdateBtn').removeAttribute('onclick');
+        layerPopclose('commentUpdatePopup');
+    }
+
+    - response : 서버에서 반환된 JSON 데이터이다. 댓글 정보(ex_ 작성자, 내용) 포함.
+    
+    ● Modal vs popup
+    - popup은 방문자가 특정 페이지에 '접속할 때 바로 뜨는 창'으로, 홈 화면, 메뉴, 상품 페이지 등 원하는 페이지에서 팝업창이 뜨도록 지정.
+
+    - modal은 방문자가 '특정 버튼 또는 링크를 클릭'했을 때 뜨는 창으로, 페이지 내에서 추가적인 정보를 보여주고 싶을 때 활용.
+  
+    ● openCommentUpdatePopup() 
+    - findCommentById()를 호출해서 댓글 상세정보를 조회한다.
+    success() 함수의 response는 URI의 id에 해당되는 단일 댓글 객체이다.
+
+    - layer popup의 작성자와 내용에 기존 댓글 정보를 보여주고, 수정 버튼에 updateComment() 함수를 클릭 이벤트로 바인딩한다.
+    모든 댓글은 PK(id)를 기준으로 UPDATE 되기 떄문에, 팝업이 열리는 시점에 수정 버튼에 댓글의 id를 전달해 주어야 한다.
+    
+    ● closeCommentUpdatePopup()
+    - layer popup의 작성자와 내용을 초기화하고, 수정 버튼에 바인딩된 클릭 이벤트를 제거한 후 팝업을 닫는다.
+
+    - layerPopclose() 함수도 마찬가지로 기존에 comment.js에 선언되어 있던 함수로, 화면에 레이어 팝업을 닫는 기증을 한다.
+
+    4. findAllComment() 함수 수정
+
+    각 댓글의 수정 버튼을 클릭했을 때 레이어 팝업이 오픈될 수 있도록 수정 버튼에 클릭 이벤트를 선언해 주어야 한다. 
+    view.html의 findAllComment()에서 commentHtml에 그리는 버튼을 변경.
+
+        <p class="func_btns">
+            <button type="button" onclick="openCommentUpdatePopup(${row.id});" class="btns"><span class="icons icon_modify">수정</spab></button>
+            <button type="button" class="btns"><span class="icons icon_del">삭제</span></button>
+        </p>
+
+    5.  댓글 목록의 수정 버튼 클릭
+    
+    이제, 상세 페이지에서 댓글 수정 버튼을 클릭해 보면 레이어 팝업에 기존 댓글 정보가 출력이 된다.
+    
+![layerPopup_result](../grammer_sum/img/layerPopup_result.png)    
+
+    다음은 레이어 팝업 수정 버튼이다. 댓글 목록에서 수정을 클릭하면 실행되는 openCommentUpdatePopup() 함수에 의해 onclick 이벤트로 udpateComment()가 바인딩되며, 뒤에서 해당 함수를 이용해 댓글 정보를 수정한다.
+    
+![layerPopup_yse](../grammer_sum/img/layerPopup_yse.png)
+
+    레이어 팝업 우측 상단의 X 또는 취소 버튼을 클릭하면 closeCommentUpdatePopup() 함수에 의해 onclick 이벤트가 제거 된다.
+    
+![layerPopup_no](../grammer_sum/img/layerPopup_no.png)    
+
+    6. updateComment() 함수 작성하기
+    
+    마지막으로, view.html에 레이어 팝업의 수정 버튼을 클릭했을 때 실행되는 updateComment() 함수를 작성해보자.
+
+    // 댓글 수정
+    function udpateComment(id) {
+
+        const writer = document.getElementById('modalWriter');
+        const content = document.getElementById('modalContent');
+        isValid(writer, '작성자');
+        isValid(content, '내용');
+
+        const postId = [[ ${post.id} ]];
+        const params = {
+            id : id,
+            postId : postId,
+            content : content.value,
+            writer : writer.value
+        }
     
 
+        $.ajax({
+            url : `/posts/${postId}/comments/${id}`,
+            type : 'patch',
+            contentType : 'application/json; charset=utf-8',
+            dataType : 'json',
+            data : JSON.stringify(params), 
+            async : false,
+            success : function (response) {
+                alert('수정되었습니다.');
+                closeCommentUpdatePopup();
+                findAllComment();
+            },
+            error : function (request, status, error) {
+                console.log(error)
+            } 
+        })
+    }
 
+    - stringify - javascript 값을 JSON 문자열로 변환
+    - 함수는 파라미터로 댓글의 id를 전달받아 서버로 함께 전송된다.
 
+### 정리
+    웹 사이트에서 팝업은 대표적으로 윈도우 팝업과 이번에 사용한 레이어 팝업으로 나뉜다. 
+    윈도우 팝업은 사이즈 조절이 가능하며 창을 마음대로 이동할 수 있으나, 레이어 팝업은 창 컨트롤이 불가능하다는 특징이 있다.
 
-
+    실무에서는 두 가지 팝업 모두를 자주 사용하게 된다. 
+    윈도우 팝업은 부모창과 자식창 간의 데이터 전달이 레이어 팝업에 비해 까다롭기 때문에 개인적으로 레이어 팝업 사용을 지향하는 편ㄴ이다. 
 
 
 
