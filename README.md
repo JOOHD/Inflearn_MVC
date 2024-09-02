@@ -30,3 +30,5 @@
 ### ● <a href="grammer/grammer_sum/modelAttribute_DTO.md">@ModelAttribute vs DTO 객체 변환</a>
 ### ● <a href="grammer/grammer_sum/paging/Paging_@Pageable.md">SpringBoot - paging(@PageableDefault 적용)</a>
 ### ● <a href="grammer/grammer_sum/paging/Paging_Mybatis.md">springBoot - paging(MyBatis 적용)</a>
+
+### document & REST API & aspect(좀 더 자세하게 알아보자) 추가 24/09/02

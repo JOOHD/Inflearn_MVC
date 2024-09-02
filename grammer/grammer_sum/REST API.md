@@ -983,7 +983,99 @@
     윈도우 팝업은 사이즈 조절이 가능하며 창을 마음대로 이동할 수 있으나, 레이어 팝업은 창 컨트롤이 불가능하다는 특징이 있다.
 
     실무에서는 두 가지 팝업 모두를 자주 사용하게 된다. 
-    윈도우 팝업은 부모창과 자식창 간의 데이터 전달이 레이어 팝업에 비해 까다롭기 때문에 개인적으로 레이어 팝업 사용을 지향하는 편ㄴ이다. 
+    윈도우 팝업은 부모창과 자식창 간의 데이터 전달이 레이어 팝업에 비해 까다롭기 때문에 개인적으로 레이어 팝업 사용을 지향하는 편이다. 
 
+### REST API 삭제 기능    
+    1. 댓글 API 컨트롤러 - 메서드 추가
+    
+    // 댓글 삭제
+    @DeleteMapping("/posts/{postId}/comments/{id}")
+    public Long deleteComment(@PathVariable final Long postId,          @PathVariable final Long id) {
+        return commentService.deleteComment(id);
+    }
 
+    - REST API 설계 규칙에서 Document에 해당되는 기능으로, 특정 게시글(postId)에 등록된 모든 댓글 중 PK(id)에 해당되는 댓글을 삭제한다.
+    삭제 프로세스가 완료되면 삭제 된 PK(id)를 리턴한다.
+
+    2. findAllComment() 함수 수정
+
+    상세 페이지의 댓글은 findAllComment()를 이용해서 출력하며, 각 댓글의 삭제 버튼을 클릭 했을 때 기능이 작동하도록 클릭 이벤트를 선언해 주어야 한다. view.html의 findAllComment()에서 commentHtml에 그리는 삭제 버튼에 onclick 이벤트를 추가.
+
+    <button type="button" onclick="deleteComment(${row.id});" class="btns"><span class="icons icon_del">삭제</span></button>
+
+    3. deleteCommet() 함수 작성
+
+    // 댓글 삭제
+    function deleteComment(id) {
+
+        if (!confirm('선택하신 댓글을 삭제할까요?') ) {
+            return false;
+        }
+
+        const postId = [[ ${post.id} ]];
+
+        $.ajax({
+            url : 'posts/${postId}/comments/${id}',
+            tyep : 'delete',
+            dataType : 'json',
+            async : false,
+            success : function (response) {
+                alert('삭제되었습니다.');
+                findAllComment();
+            },
+            error : function (request, status, error) {
+                console.log(error)
+            }
+        })
+    }
+
+    - CommentApiController의 deleteComment()를 호출해서 댓글을 삭제 처리한다. 게시글과 마찬가지로 delete_yn 칼럼의 상태값을 변경하는 논리 삭제 방식이며, 삭제가 완료된 후 findAllComment()로 댓글을 다시 조회.
+
+    4. Indent depth (들여쓰기)를 줄이는 코딩
+
+    코딩에 도움이 되는 팁이다. deleteComment()에서 삭제 여부를 확인한느 if문의 confirm에 not(!)을 붙여 "취소"가 클릭이된 경우에는 로직이 종료되도록 "return false" 처리를 했다.
+
+    아래 코드는 if문 안에서 메인 로직이 실행되는 구조이다.
+    우리가 작성한 로직은 Indent depth가 1이지만, 아래 코드는 indent가 1 증가했으니 indent depth는 총 2가 된다.
+
+    // 댓글 삭제
+    function deleteComment(id) {
+        if (confirm('선택하신 댓글을 삭제할까요?')) {
+            const postId = [[ ${post.id} ]];
+            $.ajax({
+                url : '/posts/${postId}/comments/${id}',
+                type : 'delete',
+                dataType : 'json',
+                async : false,
+                success : function (response) {
+                    alert('삭제되었습니다.');
+                    findAllComment();
+                },
+                error : function (request, status, eror)
+            })
+        }
+    }
+
+    다음의 두 함수는 같은 기능을 하는 함수이다. printNumber1()은 indent depth가 3이고, printNumber2()는 indent depth가 1이다. 누가 봐도 뒤의 코드가 훨씬 깔끔하다.
+
+    function printNumber1() {
+        if (1 === 1) {
+            if (2 === 2) { // Indent 1 증가 (depth : 1)
+                for (let i = 0; i <= 10; i++) { // Indent depth 1 증가 (depth : 2)
+                    console.log(i); // Indent 1 증가 (depth : 3)
+                }
+            }
+        }
+    }
+
+    function printNumber2() {
+        if (1 !== 1 || 2 !== 2) {
+            return false; // Indent 1 (depth : 1)
+        }
+        for (let i = 0; i <= 10; i++) {
+            console.log(i); // Indent 1 (depth : 1)
+        }
+    }
+
+    이렇듯 함수(메서드)의 로직을 작성할 때 함수가 종료되어야 하는 예외 조건을 앞쪽에 선언해 두고, 메인 로직이 실행되는 구조로 코딩 연습을 해야 한다.
 
