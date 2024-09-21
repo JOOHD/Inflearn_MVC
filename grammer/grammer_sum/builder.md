@@ -2,13 +2,27 @@
 
 ### Builder pattern
 
+    1. 생성자 파라미터 생성 
+    
     복잡한 객체의 생성 과정과 표현 방법을 분리하여 다양한 구성의 인스턴스를 만드는 생성 패턴이다. 
     생성자에 들어갈 매개 변수를 메서드로 하나하나 받아드리고 마지막에 통합 빌드해서 객체를 생성하는 방식이다.
+
+        일반 객체 생성 (생성자 이용)
+        Bag bag = new Bag("name", 1000, "memo");
+
+        빌더 패턴
+        Bag bag = Bag.builder()
+                        .name("name")
+                        .money(1000)
+                        .memo("memo")
+                        .build();
 
     이해하기 쉬운 사례로 수제 햄버거를 들 수 있다. 
     수제 햄버거를 주문할때 빵이나 패티 등 속재료들은 주문하는 사람이 마음대로 결정된다.
     어느 사람은 치즈를 빼달라고 할 수 있고, 어느 사람은 토마토를 빼달라고 할 수 있다. 
     이처럼 선택적 속재료들을 보다 유연하게 받아 다양한 타입의 인스턴스를 생성할 수 있어, 클래스의 선택적 매개변수가 많은 상황에서 유용하게 사용된다.
+
+    2. 객체 생성 시, 필수 필드를 강제 
 
 ### 점층적 생성자 패턴
 
@@ -162,6 +176,11 @@
 
     빌더 패턴을 이용하면 더 이상 생성자 오버로딩 열거를 하지 않아도 되며, 데이터의 순서에 상관없이 객체를 만들어내 생성자 인자 순서를 파악할 필요도 없고 잘못된 값을 넣는 실수도 하지 않게 된다.
 
+### 빌더 패턴을 사용해야 되는 이유
+
+    1. 생성자 파라미터가 많을 경우 가독성이 좋지 않아서.
+    2. 파라미터 선언에 종속 적이지 않다.
+
 ### 빌더 패턴 구현
 
     빌더 패턴 구현 자체는 난이도가 어렵지 않다.
@@ -250,48 +269,106 @@
 
     결과 : Student {id = '20240920', name=아무개, grade=Senior}
 
+### 빌더 패턴 va @Data(Command Object)
 
-    이렇게 생성자나 setter 메서드를 사용하여 필드를 초기화할 수 있지만, 많은 필드를 가진 객체의 경우 초기화 코드가 길어지고 가독성이 떨어질 수 있습니다. 이때 빌더 패턴을 사용하면 이러한 문제를 해결할 수 있습니다. 각 방법은 상황에 따라 장단점이 있으므로, 적절한 방법을 선택하여 사용할 수 있습니다.
+    빌더 패턴의 목적이 코드 간결화를 위한 기능이라고 알고있다.
+    즉, 생성자나 setter 메서드를 사용하여 필드를 초기화, 많은 필드를 가진 객체의 경우 초기화 코드가 길어지며 가독성이 떨어지는 부분을 보완하기 위한 기능이라고 알고있다.
 
-    @Data
-    public class AdminProductDto {
-        private Integer id;
-        private Integer productCategoryId;
-        private String name;
-        private String description;
-        private Integer price;
-        private SoldOutStatus soldOutStatus;
-        private String picture;
+    그런데 의문점이 생성자 or setter 생성은 Lombok에서 제공해주는 @Data 어노테이션도 같은 기능을 가진 것으로 알고 있다.
+    (@Data 어노테이션은 생성자를 정의할 필요 없이 간편하게 객체를 생성하고,
+    필드를 초기화할 수 있다.)
 
-        // 기본 생성자는 Lombok이 자동으로 생성
-    }
+    빌더 패턴은 정적 데이터만 다루는 줄 알았다. 그래서 생성자 setter 메서드를 생성해주는 기능인 @Data를 사용해서 command object와 함꼐 사용하게 되면 생성자 생성, 필드 초기화, setter 메서드 생성, 동적 데이터 구현이라는 빌더 패턴 보다 더 많은 기능을 가진 @Data를 사용한 command object를 사용하는게 더 효율적이라고 생각했다.
 
-    정적 코드
+### 빌터 패턴 @Data 공존
 
-    AdminProductDto productDto = new AdminProductDto();
-    productDto.setName("아메리카노");
-    productDto.setDescription("맛있는 커피");
-    productDto.setPrice(2800);
-    productDto.setSoldOutStatus(SoldOutStatus.NOT_SOLD_OUT);
+    빌더 패턴과 @Data 어노테이션은 함께 공존 가능하다.
+    이 둘은 서로 다른 목적을 갖고 있으며, 동시에 사용하면 객체의 편리한 생성과 데이터 접근을 모두 지원할 수 있다.
 
-    동적 코드
+    ● @Data & 빌더 패턴 함께 사용하는 경우
 
-    @RestController
-    @RequestMapping("/products")
-    public class ProductController {
-
-        @PostMapping
-        public ResponseEntity<AdminProductDto> createProduct(@RequestBody AdminProductDto productDto) {
-            // 이곳에서 productDto에 대한 비즈니스 로직 처리
-            // 예: 데이터베이스에 저장
-
-            return ResponseEntity.ok(productDto);
+        @Data
+        @Builder
+        public class AdminProductDto {
+            private Integer id;
+            private Integer productCategoryId;
+            private String name;
+            private String description;
+            private Integer price;
+            private SoldOutStatus soldOutStatus;
+            private String picture;
         }
-    }
 
-    {
-        "name": "아메리카노",
-        "description": "맛있는 커피",
-        "price": 2800,
-        "soldOutStatus": "NOT_SOLD_OUT"
-    }
+    하지만 내 생각에는 @Data 와 @Builder 패턴을 같이 사용하는 것은 별로 인 것 같다.
+    두 가지 접근 방식이 각기 다른 목적을 가지고 있기 때문이다.
+
+### 빌더 패턴과 @Data 공존 시, 문제점
+
+    1. 중복 기능
+
+    - 빌더 패턴은 객체 생성 시 필드를 명시적으로 지정하여 가독성을 높이고, 필수 필드 강제 등의 기능을 제공.
+    
+    만약 두 기능을 함께 사용하면, 필드를 설정하는 방식이 두 개가 된다.
+    builder() 메서드로 설정할 수 있고, 동시에 setter() 메서드로도 값을 넣을 수 있다. 이렇게 되면 객체 설정 방식이 일관되지 않게 되어, 코드의 명확성이 떨어진다. 
+
+    2. 명확하지 않은 의도
+
+    - 빌더 패턴을 쓰는 이유는 안정적으로 객체를 생성하고, 필수 필드를 강제하거나 유연하게 선택적 필드를 설정하기 위함. 
+    @Data로 setter를 열어 두면, 객체를 빌더로 만들다가 갑자기 setter로 필드를 바꾸는 일이 생긴다.
+
+    결론 
+
+    빌더 패턴 : 명시적으로 필드를 설정하는 것에 초점을 맞추고, 필요치 않은 setter는 제공하지 않는 것이 좋다.
+
+    @Data : DTO 나 간단한 Entity 클래스처럼 객체의 필드를 유연하게 변경해야 할 때 사용하는 것이 더 적합.
+
+
+### 빌더 패턴 동적 데이터 기능
+
+    ● 동적 코드
+
+        public AdminProductDto createProduct(String name, int price, String description) {
+            // 동적으로 사용자 입력 데이터를 바탕으로 객체를 생성
+            return AdminProductDto.builder()
+                .name(name)
+                .price(price)
+                .description(description)
+                .build();
+        }
+
+        public void enrollProduct(String name, int price, String description) {
+            AdminProductDto product = createProduct(name, price, description);
+        }
+
+### static class (정적 내부 클래스)
+
+    정적 내부 클래스라는 심플 빌더 패턴 방법 중 하나이다.
+    생성자가 많을 경우, 변경 불가능한 불변 객체가 필요한 경우 코드의 가독성과 일관성, 불변성을 유지하는 것에 중점을 둔다.(우리가 사용하는 빌더 패턴과 차이는 거의 없다.) 다만 다른 점은 빌더 클래스가 구현할 클래스의 내부에 static class를 구현한다는 점이다. 
+
+    ex)
+        class Person {
+            String name;
+            int age;
+
+            // 정적 내부 빌더 클래스
+            public static class Builder {
+                String name;
+                int age
+
+                Builder name(String name) {
+                    this.name = name;
+                    return this;
+                }
+
+                Builder age(int name) {
+                    this.age = age;
+                    return this;
+                }
+            }
+
+            private Person(Builder builder) {
+                this.name = builder.name;
+                this.age = builder.age;
+            }
+        }
+
