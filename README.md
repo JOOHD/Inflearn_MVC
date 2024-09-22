@@ -32,3 +32,6 @@
 ### ● <a href="grammer/grammer_sum/paging/Paging_Mybatis.md">springBoot - paging(MyBatis 적용)</a>
 
 ### document & REST API & amazon S3 & aspect(좀 더 자세하게 알아보자) 햣추가 24/09/02
+
+### builder & jackson 24/09/22 추가
+

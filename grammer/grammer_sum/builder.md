@@ -22,7 +22,88 @@
     어느 사람은 치즈를 빼달라고 할 수 있고, 어느 사람은 토마토를 빼달라고 할 수 있다. 
     이처럼 선택적 속재료들을 보다 유연하게 받아 다양한 타입의 인스턴스를 생성할 수 있어, 클래스의 선택적 매개변수가 많은 상황에서 유용하게 사용된다.
 
-    2. 객체 생성 시, 필수 필드를 강제 
+### 핵심 결론
+
+    밑에 글들도 결국에는 생성자 파라미터가 많아지면 가독성이 떨어지는 비효율을 막기 위해 보완된 기능이 빌더 패턴인 것인데, 핵심은
+
+    1. (Builder builder)
+    
+    Member member = new Member.Builder(1L, "John Doe".....)
+    이렇게 파라미터가 많아지는 불편함을,
+
+    public Member(Builder builder)
+    처럼 command object와 같은 개념으로 빌더 클래스 객체를 선언해서 묶는다.
+
+    2. static class (inner class)
+
+    Builder builder 객체에 어떤 값들이 담겨있는지 모를 수 있다.
+        - 외부 클래스에 필드 인스턴스가 담겨 있는 것(필요한 값만 뽑아 올 수도 있음.)
+        - static class = 빌더 객체가 외부 클래스의 필드 값을 안전하고 일관되게 전달하는 목적.
+      
+        ex)
+
+            public class Member {
+                private final Long id;       // 필수 필드
+                private final String name;   // 필수 필드
+                private final String address; // 선택 필드
+
+                // Member의 생성자, 빌더 클래스에서 사용됨
+                public Member(Builder builder) {
+                    this.id = builder.id;           // 빌더 객체의 필드 값을 Member로 옮김
+                    this.name = builder.name;
+                    this.address = builder.address;
+                }
+
+                // 정적 빌더 클래스
+                public static class Builder {
+                    private Long id;          // 필수 필드
+                    private String name;      // 필수 필드
+                    private String address;   // 선택 필드
+
+                    // 필수 필드를 빌더의 생성자로 받음
+                    public Builder(Long id, String name) {
+                        this.id = id;
+                        this.name = name;
+                    }
+
+                    // 선택 필드를 설정하는 메서드
+                    public Builder address(String address) {
+                        this.address = address;
+                        return this;  // 빌더 객체를 반환해 체인처럼 이어지게 함
+                    }
+
+                    // 최종적으로 Member 객체를 생성하는 메서드
+                    public Member build() {
+                        return new Member(this);  // Member 생성자를 호출해 객체 생성
+                    }
+                }
+            }
+
+        1. 외부/이너 클래스
+           - Member = 외부 클래스, Builder = 이너 클래스(static) 
+           - Builder 는 Memebr 의 필수 필드와 선택 필드를 저장하고, 최종적으로 build() 메서드를 통해 Member 객체를 생성.
+        
+        2. Builder 클새스에서 값 설정
+           - Builder 클래스에서는 Member 객체의 필드를 설정할 수 있는 메서드들을 제공한다. 그 값들은 Builder 클래스의 인스턴스 변수에 저장.
+                ex)
+                Member.Builder(1L, "JOO")는 Builder의 id와 name 필드를 설정하고, 이후 address, email 등의 선택적인 필드는 메서드를 통해 설정
+
+        3. Member(Builder builder) 생성자에서 값을 받는 과정
+            - Member 클래스는 Builder 객체로부터 필드를 받아 자신의 필드를 초기화ㅏ 한다. 이렇게 하면 Builder에 설정된 값들이 최종적으로 Member 객체에 저장된다.
+
+                ex)
+                public Member(Builder builder) {
+                    this.id = builder.id;
+                    this.name = builder.name;
+                    this.address = builder.address;
+                }
+
+                - 이 과정에서 Builder 내부의 값들이 Member로 옮겨지며, 외부에서 직접 Member의 필드에 접근할 필요 없이, 안전하게 객체가 생성된다.
+
+        4. 필요한 인스턴스만 가져오는 유연성
+            - Builder 패턴의 장점 중 하나는, 필수적인 값들만 생성자에서 받고, 나머지 선택적인 값들은 체이닝 방식으로 필요한 만큼만 설정할 수 잇다.
+
+    결론 저긍로는 외부 클래스의 필드 인스턴스가 Builder를 통해 필요한 값들만 가져와서 객체를 생성하는 것이 필더 패턴의 핵심이다.        
 
 ### 점층적 생성자 패턴
 
@@ -372,3 +453,152 @@
             }
         }
 
+    위 코드에서 Person.Builder는 정적으로 선언되어 있기 때문에, Person 객체를 먼저 만들지 않아도 Builder 클래스를 사용할 수 있다.
+
+    일반적으로, 비정적 클래스는 외부 클래스의 인스턴스가 필요하다.
+    만약 Builder가 정적이 아니라면, Person 인스턴스를 먼저 만들어야 Builder 인스턴스도 만들 수 있다. 
+
+    그러나 빌더 패턴의 핵심은 객체를 유연하게 생성하는 것이므로, 외부 클래스의 인스턴스 없이도 Builder 객체를 바로 생성할 수 있어야 한다.
+
+## ver2
+
+### Setter method
+
+    public class Member {
+        private Long id;
+        private String name;
+        private String address;
+    }
+
+
+    ● 생성자
+
+    public Member(Long id, String name, String address) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+    }
+
+    ● 필드 값 세팅
+    
+    Member member = new Member(1L, "joo", "seoul".....);
+    - 이런 필드 값의 종류가 많아지면 가독성이 떨어진다.
+
+    ● setter
+
+    public class Member {
+        private Long id;
+        private String name;
+        private String address;
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public void setName(String Name) {
+            this.name = name;
+        }
+
+        public void setAddress(String address) {
+            this.address = address;
+        }
+    }
+
+    ●  필드 값 세팅
+
+    Member member = new Member();
+    member.setId(1L);
+    member.setName("joo");
+    member.setAddress("seoul");
+
+### Builder pattern
+
+    public class Member {
+        private Long id;
+        private String name;
+        private String address;
+
+        public Member(Builder builder) {
+            this.id=builder.id;
+            this.name=builder.name;
+            this.address=builder.address;
+
+        }
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static class Builder{
+            private Long id;
+            private String name;
+            private String address;
+
+            public Builder id(Long id) {
+                this.id=id;
+                return this;
+            }
+            public Builder name(String name) {
+                this.name=name;
+                return this;
+            }
+            public Builder address(String address) {
+                this.address=address;
+                return this;
+            }
+
+            public Member build() {
+                return new Member(this);
+            }
+
+        }
+    }
+
+    Member member = new Member();
+            .id(1L)
+            .name("joo")
+            .address("seoul")
+            .build();
+
+    ● 코드 분석
+
+    먼저 Member 클래스 내부에 static class는 Builder 클래스가 들어있다.
+
+    이 Builder 클래스는 Member 클래스의 필드 값을 가지고 있따.
+    Builder가 모든 값을 가지고 있을 필요는 없다.        
+
+    만약 JPA를 적용한다면 id 값을 우리가 세팅할 일은 없다.
+    그런 경우 Builder가 필드 id를 가지고 있지 않으면 된다.
+
+    ● test
+
+    public static class Builder {
+        private Long id;
+        private String name;
+        private String address;
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder address(String address) {
+            this.address = address;
+            return this;
+        }
+        publci Member build() {
+            return new Member(this);
+        }
+    }
+
+    ● 빌더 메서드 정의
+
+    public Member(Builder builder) { //생성자. Member로 변환하는 build 메소드에서 사용
+        this.id=builder.id;
+        this.name=builder.name;
+        this.address=builder.address;
+    }
