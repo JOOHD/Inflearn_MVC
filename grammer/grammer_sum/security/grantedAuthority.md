@@ -228,6 +228,18 @@
             this.attributes = attributes;
         }
 
+        ● attributes : OAuth2 사용자 정보에서 사용자의 추가 정보를 포함하는 Map 형태로 사용된다. (이 속성은 일반적으로 OAuth2 인증을 통해 받은 사용자 정보를 저장하는 데 사용된다.)
+
+            - OAuth2에서의 attributes
+              - 사용자의 프로필 정보와 같은 여러 속성 값을 포함, claims와 유사.
+              - 소셜 로그인에서 각 플랫폼에서 제공하는 사용자 정보를 담고있다.
+
+            ex) 
+                Map<String, Object> attributes = new HashMap<>();
+                attributes.put("email", "john.doe@example.com");
+                attributes.put("name", "John Doe");
+                attributes.put("picture", "https://example.com/john.jpg");  
+
         //Non Social + Employer 로그인 용도
         public CustomUserDetails(Long authId, 
                                  String roles, 
@@ -409,7 +421,7 @@
                                             HttpServletResponse response,
                                             Authentication authentication
                                             ) throws IOException {
-            String accessToken = token Provider.createAccessToken(authentication);
+            String accessToken = tokenProvider.createAccessToken(authentication);
             String refreshToken = tokenProvider.createRefreshToken(authentication);
 
             /**
@@ -488,6 +500,32 @@
             }
         }
 
+### JWT의 구조
+
+    - JWT는 세 부분으로 구성되어 있습니다:
+    
+        1. 헤더(header) 
+        - JWT의 타입과 서명 알고리즘을 명시합니다. 일반적으로 다음과 같은 구조를 가집니다.
+
+            ex)
+                {
+                    "alg": "HS256",
+                    "typ": "JWT"
+                }
+
+        2. 페이로드(payload) 
+        - 사용자 정보와 같은 클레임을 포함합니다. 예를 들어, 사용자 ID, 역할, 만료 시간 등이 포함될 수 있습니다.
+
+            ex)
+                {
+                    "sub": "userId",
+                    "role": "ROLE_USER",
+                    "exp": 1633072800 // 만료 시간
+                }
+
+        3. 서명(signature) 
+        - 헤더와 페이로드를 조합하여 secretKey로 서명한 부분입니다. 이 서명을 통해 JWT가 변조되지 않았는지 확인할 수 있습니다.       
+
 ### 1. SuccessHandler class 해석
 
     - Spring security에서 인증(authentication)에 성공했을 때, 실행되는 후속 처리를 담당하는 클래스이다. 주로 인증에 성공한 사용자에게 추가적인 응답을 전송하거나, 사용자를 특정 페이지로 redirect하는 등의 작업을 수행하는 데 사용.
@@ -509,6 +547,27 @@
         - 위 코드를 보면 properties/yml 파일에 jwt.domain/oauth-signup-uri/signin-uri 정의된 (key)값이 domain/signinURI/signupURI 변수에 주입된다.
 
         - jwt.domain = example.com 이면, String domain = example.com
+
+### 1-1 Enum의 성격
+
+    - java에서 열거형 타입을 나타낸다. 이는 고정된 상수 집합을 정의하는 것으로, 특정 값들이 미리 정해져 있는 경우 사용된다.
+
+        ex)
+            Role 이라는 Enum은 USER, ADMIN, EMPLOYER 등의 역할을 고정된 값으로 정의.
+
+            이러한 고정된 상수 값들은 재사용성이 높으며, 실수로 다른 값이 들어가는 것을 방지.
+
+### 1-2 Enum class의 상수 값을 String으로 변환하는 이유
+
+    - Enum 값은 보통 코드나 개발 로직에서만 의미가 있다. 하지만, DB에 Enum을 저장하거나, 외부 API와 통신할 때는 문자열로 변환해야 하는 경우가 많다.
+      
+        ex)
+            권한 관리에서 ROLE_USER 같은 값을 String으로 변환해서 DB에 저장하거나, JSON 응답으로 전달하는 경우가 일반적이다.
+
+    - HTTP 응답이나 JSON 등의 포맷에서는 Enum을 직접 사용할 수 없다. 문자열로 변환해줘야 외부 시스템에서 해당 데이터를 처리할 수 있다.
+
+        ex)
+            Role.ADMIN 이라는 Enum 상수 간의 비교보다 유연한 조건 처리가 가능하다. 예를 들어, 권한(Role)이 여러 개일 때 이를 콤마로 연결된 문자열로 처리하여, 복수 권한을 비교하거나 추가하는 로직에서 유용하게 사용할 수 있다.
 
 ### 2. onAuthenticationSuccess method
 
@@ -694,3 +753,267 @@
      ● 결론
 
     redirectUriByFirstJoinOrNot method는 소셜 로그인 사용자의 가입 상태에 따라 적절한 페이지로 리다이렉트하는 로직을 제공합니존 사용자는다. 최초 가입자는 회원가입 페이지로, 기존 로그인 페이지로 안내되므로 사용자 경험을 향상시키는 데 중요한 역할을 합니다.
+
+### TokenProvider
+
+    @Sl4fj
+    @Component
+    public class TokenProvider imlements InitializingBean {
+
+        private static final String AUTHORITIES_KEY = "auth";
+        private final String secret;
+        private final long accessTokenValidityInMilliseconds;
+        private final long refreshTokenValidityInMillisenconds;
+
+        private Key key;
+        public TokenProvider(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInMilliseconds,
+            @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInMilliseconds) {
+        this.secret = secret;
+        this.accessTokenValidityInMilliseconds = accessTokenValidityInMilliseconds * 1000;
+        this.refreshTokenValidityInMilliseconds = refreshTokenValidityInMilliseconds * 1000;
+        
+        }
+
+        // 빈이 생성되고 주입을 받은 후에 secret 값을 Base64 Decode헤서 key 변수에 할당하기 위해
+        @Override
+        public void afterPropertiesSet() {
+            // BASE64(인코딩 된 문자열)을 디코딩하여 바이트 배열로 변환.
+            // BASE64 = secret key(JWT 토큰을 서명할 때 사용) 서명을 위한 형식으로 디코딩.
+            byte[] keyBytes = Decoders.BASE64.decode(secret);
+            this.key = Keys.hmacShaKeyFor(keyBytes);
+        }
+
+        - JWT 토큰을 생성하거나 검증할 때 사용할 비밀키를 초기화하는 메서드
+        - scret이라는 Base64로 인코딩도니 문자열에서 디코딩된 값을 사용하여 HMAC-SHA 알고리즘에 필요한 키 객체를 생성하는 과정.
+
+        - 이 초기화 작업은 의존성 주입 후에 실행되며, JWT 서명과 검증에서 중요한 부분을 담당한다.
+
+        public String createAccessToken(Authentication authentication) {
+            String authorities = authoritication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.joining(","));
+
+            // 토큰의 expire 시간을 설정
+            long now = (new Date()).getTime();
+            Date validity = new Date(now + this.accessTokenValidityInMilliseconds);
+            log.info("Login User Id = {}, authority = []", authentication.getName(), authorities);
+            return Jwts.builder()
+                .setSubject(authentication.getName())     // user_Id가 반환
+                .claim(AUTHORITIES_KEY, authorities)      // 정보 저장
+                .signWith(key, SignatureAlgoristhm.HS512) // 사용할 암호, 알고리즘, signature에 들어갈 secret값 세팅
+                .setExpiration(validity) // set Expire Time 해당 옵션 안 넣으면 expire안함
+                .compact();
+        }
+
+        public Strint createRefreshToken(Authentication authentication) {
+            String authorities = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.joining(","));
+
+            // 토큰의 expire 시간을 설정
+            long now = (new Date()).getTime();
+            Date validity = new Date(now + this.refreshTokenValidityInMilliseconds);
+            return Jwts.builder()
+                    .setSubject(authentication.getName())    // user_id가 반환됨
+                    .claim(AUTHORITIES_KEY, authorities)     // 정보 저장
+                    .signWith(key, SignatureAlgorithm.HS512) // 사용할 암호화 알고리즘과 , signature 에 들어갈 secret값 세팅
+                    .setExpiration(validity)                 // set Expire Time 해당 옵션 안넣으면 expire안함
+                    .compact();    
+        }
+
+        // 토큰으로 클레임을 만들고 이를 이용해 유저 객체를 만들어서 최종적으로 authentication 객체를 리턴
+        public Authentication getAuthentication(String token) {
+            Claims claims = Jwts
+                    .parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            List<SimpleGrantedAuthority> authorities = Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+
+            User principal = new User(claims.getSubject(), "", authorities);
+
+            return new UsernamePasswordAuthenticationToken(prinicipal, token, authorities);
+        }
+
+        - claims
+
+        // 토큰의 유효성 검증을 수행
+        public boolean validateToken(String token) {
+            try {
+                Jwts.parserBilder().setSigningKey(key).parseClaimsJws(token);
+                return true;
+            } catch (io.jsonwebtoken.security.SecurityException |       MalformedJwtException e) {
+                throw new BadTokenException("잘못된 JWT 서명입니다.", e);
+            } catch (ExpiredJwtException e ){
+                return false;
+            } catch (UnsupportedJwtException e) {
+                throw new BadTokenException("지원되지 않는 JWT 토큰입니다.", e);
+            } catch (IllegalArgumentException e) {
+                throw new BadTokenException("JWT 토큰이 잘못되었습니다.", e);
+            }
+        }
+    }
+
+    ● 결론
+
+    - createAccessToken() 메서드로 authentication에 존재하는 authority 정보들을 쉼표로 파싱후, jwt builder로 jwt token 생성.
+
+    - getAtuhentication(String token) 메서드를 이용하여, 발급된 token 정보를 쿠키 값으로 계속 사용하는 유저들의 authorities들을 파악.
+
+    그후 UsernamePasswordAuthenticationToken의 authentication 구현 객체를 SecurityContextHolder 객체에 내부적으로 저장함 -> 사실상 세션임 언제든지 꺼내서 확인할 수 있다. (같은 Request, Response 사이클 내에서만)
+
+### TEST
+
+    CustomUserDetails, AuthenticationSuccessHnadler, TokenProvider 세 클래스의 가상의 구현을 통해 이들간의 상호 작용 흐름을 보자.
+
+    이 예시는 사용자가 OAuth2 소셜 로그인을 수행한 후, CustomUserDetails를 통해 사용자 정보를 가져오고, SuccessHandler를 사용하여 JWT를 생성하고 쿠키로 설정하는 과정을 설명.
+
+    1. CustomUserDetails 클래스
+
+        - 사용자 정보를 담고 있는 클래스이다. 
+        - UserDetails interface를 구현하여 Spring Security와 통합된다
+       
+        public class CustomUserDetails implements UserDetails {
+        private String id;                      // 사용자 ID
+        private String username;                // 사용자 이름
+        private String roles;                   // 사용자 권한
+        private Map<String, Object> attributes; // 추가 속성
+
+        public CustomUserDetails(String id, String roles, Map<String, Object> attributes) {
+            this.id = id;
+            this.roles = roles;
+            this.attributes = attributes;
+        }
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return List.of(() -> roles); // ROLE 형태로 변환
+        }
+
+        @Override
+        public String getPassword() {
+            return null; // 비밀번호는 사용하지 않음
+        }
+
+        @Override
+        public String getUsername() {
+            return username; // 사용자 이름 반환
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return true; // 계정 만료 여부
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return true; // 계정 잠금 여부
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true; // 자격 증명 만료 여부
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true; // 활성화 여부
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
+
+    2. TokenProvider 클래스
+    
+        - JWT를 생성하고 검증하는 클래스이다.
+
+        @Component
+        public class TokenProvider {
+
+            private final String secretKey = "your_secret_key"; // 비밀 키
+            private final long accessTokenValidity = 3600000;   // 1시간
+
+            public String createAccessToken(CustomUserDetails userDetails) {
+                return Jwts.builder()
+                        .setSubject(userDetails.getId()) // 사용자 ID를 주제로 설정
+                        .setExpiration(new Date(System.currentTimeMillis() + accessTokenVlidity)) // 만료 시간 설정
+                        .signWith(SignatureAlgorithm.HS256, secretKey) // 서명 알고리즘 설정
+                        .compact();
+            }
+
+            public Claims validateToken(String token) { // 사용자의 id, 권한 추출.
+                return Jwts.parser()
+                        .setSigningKey(secretKey)   // JWT 서명을 검증하기 위해 비밀 키를 설정
+                        .parseClaimsJws(token)      // 주어진 JWT 토큰을 파싱하여 클레임을 추출
+                        .getBody();                 // 클레임 정보 반환
+            }
+        }
+
+    3. AuthenticationSuccessHandler 클래스
+
+        - 사용자가 성공적으로 인증된 후의 처리를 담당.
+
+        @Component
+        @RequiredArgsConstructor
+        public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler AuthenticationSuccessHandler {
+
+            private final TokenProvider tokenProvider;   
+
+            @Override
+            public void onAuthenticationSuccess(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                Auhthentication authentication) throws IOException {
+
+                CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal(); // 사용자 정보 가져오기       
+                String accessToken = tokenProvider.createAccessToken(userDetails); // JWT 생성
+
+                // JWT를 쿠키로 생성
+                response.addCookie(createCookie("accessToken", accessToken, 3600));
+                response.sendRedirect("/home"); // 성공 후 리다이렉트                            
+            }   
+
+            private Cookie createCookie(String name, String value, int maxAge) { // jwt -> cookie 형태로 생성하는 역할.
+                Cookie cookie = new Cookie(name, value); // 이름과 값을 가진 쿠키 생성
+                cookie.setMaxAge(maxAge); // 쿠키의 유효 기간 설정 (초 단위)
+                cookie.setHttpOnly(true); // 클라이언트의 JavaScript에서 접근할 수 없도록 설정
+                cookie.setSecure(true); // HTTPS에서만 쿠키가 전송되도록 설정
+                cookie.setPath("/"); // 쿠키가 유효한 경로 설정 (모든 경로에서 사용 가능)
+                return cookie; // 생성된 쿠키 반환
+            }
+
+            ● value : JWT의 서명이나 클레임을 설정할 때 사용되는 문자열이다.
+                ex)
+                    jwt의 claims에서 사용자의 id, name, email 등의 정보를 표현하는데 사용된다.
+        }
+
+    ● 흐름
+
+    1. 사용자 인증 
+    - 사용자가 OAuth2 소셜 로그인을 통해 인증 요청을 보냄
+
+    2. CustomUserDetails 생성 
+    - 성공적인 인증 후, CustomUserDetails 객체가 생성되어 사용자 정보가 담긴다.
+        ex)
+            CustomUserDetails userDetails = new CustomUserDetails("123", "ROLE_USER", attributes);
+
+    3. JWT 생성 
+    - AuthenticationSuccessHandler의 onAuthenticationSuccess 메서드에서 TokenProvicer를 통해 JWT를 생성.
+        ex)
+            String accessToken = tokenProvider.createAccessToken(userDetails);
+
+    4. 쿠키에 JWT 저장
+    - 생성된 JWT는 쿠키로 설정되어 클라이언트에 전송된다.
+        ex)
+            response.addCookie(createCookie("accessToken", accessToken, 3600));
+
+    5. 클라이언트 요청
+    - 클라이언트는 이후 요청 시 이 쿠키를 포함하여 서버에 요청을 보낸다.
+    - 서버는 쿠키에서 JWT를 읽어 인증을 수행.        
+
