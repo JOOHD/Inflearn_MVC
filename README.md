@@ -74,6 +74,8 @@
 
 ### ● <a href="grammer/grammer_sum/jackson.md">Jackson</a>
 
+### ● <a href="grammer/grammer_sum/accessLevel.md">@NoArgsConstructor(AccessLevel.PROTECTED)</a>
+
 ### aspect(좀 더 자세하게 알아보자) 해설 추가 24/09/02
 
 

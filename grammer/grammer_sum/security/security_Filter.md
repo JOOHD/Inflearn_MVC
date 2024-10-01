@@ -19,11 +19,10 @@
 
 ![webcontainer](../img/webcontainer.png)
 
-
 ### 2. SecurityConfig class
 
     @RequiredArgsConstructor
     @EnableWebSecurity
     public class SecurityConfig {
-        
+
     }
