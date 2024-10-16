@@ -220,7 +220,7 @@
                 new City("Busan", 770.1, 3404423, "051")
         );
 
-        - 데이터 선별 (조건에 따라 데이터를 선별하는 중간 연산이다.)
+        - 데이터 선별(조건에 따라 데이터를 선별하는 중간 연산이다.)
 
         cities.add(new City("Seoul", 0, 0, "02"));
 
@@ -229,4 +229,106 @@
                 .distinct()                           // 중복 제거  
                 .collect(Collectors.toList());
 
-  
+    ● 전체 조건 (Java9)
+    데이터는 반드시 사용할 기준을 조건으로 정렬되어 있는 상태여야 한다.
+
+    - sorted(Comparator.comparing()) : 스트림 요소들을 특정 필드를 기준으로 정렬하는 기능.    
+
+    ex)
+    1.
+        // 예시 데이터를 area 오름차순(default)으로 재가공
+        List<City> orderByAreaList = cities.stream()
+                .sorted(Comparator.comparing(City::getArea))
+                .collect(Collectors.toList());
+
+    2.
+        takeWhile : 스트림을 순회하다 조건이 false가 되는 순간 남은 데이터를 버린다.
+        orderByAreaList.stream()
+                .takeWhile(city -> city.getArea() < 700)
+                .map(City::getName)
+                .forEach(Sytem.out::println);
+
+                // Gwangju, Seoul
+
+    3.
+        dropWhile : 스트림을 순회하다 조건이 true가 되는 순간 순회한 데이터를 모두 버린다.
+        orderByAreaList.stream()
+                .dropWhile(city -> city.getArea() > 700)
+                .map(City::getName)
+                .forEach(System.out::println);
+
+                // Busan, Incheon, Daegu, Ulsan
+
+    4.
+        map : 스트림 원소를 반환한다.
+        List<String> filteringList = cities.steam()
+                .filter(city -> city.getArea() < 800)
+                .sorted(Comparator.comparing(City::getArea))
+                .map(city -> city.getName()) // City 클래스에서 도시명만 사용하도록 한다.
+                .collect(Collectors.toList());
+
+                // Ulsan, Incheon
+
+    5.
+        cities에서 지역 번호에 사용된 숫자에서 중복을 제거한 목록을 스트림으로 얻어내고 싶다면 어떻게 해야 할까?
+
+        List<String>  areaCodes = cities.stream()
+                .map(City::getAreaCode)           
+                .collect(Collectors.toList());
+
+                // ["02", "032", "052", "053", "062", "051"]
+
+                1. areaCodes 문자 단위로 분해
+                    0, 2
+                    0, 3, 2
+                    0, 5, 2
+                    0, 5, 3
+                    0, 6, 2
+                    0, 5, 1
+
+                2. areaCodes 단일 스트림으로 변환            
+                    0, 2, 0, 3, 2, 0, 5, 2, 0, 5, 3, 0, 6, 2, 0, 5, 1
+
+        areaCodes를 스트림으로 추출하면 위의 1번처럼 문자열 하나가 데이터 하나로 변환된다.
+        문자 단위로 분해하여 2와 같은 단일 문자열 스트림을 반환해야 한다.
+        이럴 때 사용하는 것이 Stream::flatMap 이다.
+        
+
+    6. 
+        areaCodes.stream()
+                .map(areaCode -> areaCode.split("")) // areaCode를 문자 단위로 분해한 배열로 변환
+                .flatMap(Arrays::steam) // 변환된 스트림을 단일 스트림으로 변환
+                .distinct() // 중복 제거
+                .forEach(System.out::println);
+
+                // 0, 2, 3, 5, 6, 1
+
+### 최종 연산
+
+    최종 연산은 자료형, 컬렉션, void를 반환한다.
+
+    Collection 반환
+    1. List
+    
+        List<String> streamNameList = cities.stream()
+            .filter(city -> city.getArea() > 800)
+            .sorted(comparator.comparing(City::getArea))
+            .map(City::getName)
+            .collect(Collectors.toList());
+
+    2. map
+
+        Map<Stirng, List<City>> cityMap = cities.stream()
+            .filter(city -> city.getArea() > 800)
+            .collect(Collectors.groupingBy(CIty::getName));
+
+    3. set
+
+        Set<City> citySet = cities.stream()
+            .filter(city -> city.getArea() > 800)            
+            .collect(Collectors.toSet());
+
+    4. void
+
+        cities.stream().map(City::getName).forEach(Sytem.out::println);
+        // Seoul, Incheon, Ulsan, Daegu, Gwangju, Busan
