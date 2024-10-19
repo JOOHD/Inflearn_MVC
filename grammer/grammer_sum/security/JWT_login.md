@@ -355,4 +355,353 @@
     
     - 생성된 LoginReq 객체에 접근하여, username/password를 꺼내서 
     UsernamePasswordAuthenticationToken 발급
-        - 이때 username은 principal, password는 credentials가 된다.
+
+        - 이때 username = principal, password = credentials 된다.
+
+        ex) 
+            login.getusername(), login.getPassword()
+
+            authenticationToken.getPrincipal().toString();
+            authenticationToken.getCredentails().toString();
+
+            {
+                "username" : "joo",
+                "password" : "1234"
+            }
+
+### 2. 정상적인 로그인 여부를 검증한다.
+
+    전달받은 로그인 정보를 이용해서 생성한 토큰을 가지고 로그인이 유효한지 검증하면 된다.
+    회원의 존재 여부와 존재할 경우 해당 토큰의 (Principal == username && credentials == password)를 검증하면 된다.
+
+    하지만, 패스워드를 비교하는 로직은 시큐리티 내부에서 검증되므로 따로 넣지않아도 된다.
+
+    아이디/패스워드가 일치하면 알아서 authentication을 반환해주고, 아니면 연결이 종료된다.
+
+    - authenticationManager class의 authenticate()에 토큰을 넘기면 자동으로 UserDetailsService class -> loadUserByUsername() 메소드가 실행된다.
+
+    JwtAuthenticationFilter class {
+
+        // 2. 정상적인 로그인 시도 여부를 검증한다.
+        // -> 로그인 정보를 가지고 임시로 Auth token을 생성해서 인증을 확인한다.
+        // -> DI 받은 authenticationManager 로그인 시도.
+        // -> DetailsService를 상속받은 PrincipalDetailsService가 호출되고 loadUserByusername() 함수가 실행된다.
+        // authentiacate()에 토큰을 넘기면 PrincipalDetailsService.class -> loadUserByusername() 메소드 실행된다.
+        // DB에 저장되어있는 username & passwrod가 일치하면 authentication이 생성된다.
+    }
+
+### PrincipalDetailsService class
+
+    @Service
+    @RequiredArgsConstructor
+    public class PrincipalDetailService implements UserDetailsService {
+
+        private final MemberRepository member~~;
+
+        // SecuritySession -> Authentication -> UserDetails
+        // SecuritySession(Authentication(UserDetails(PrincipalDetails)))
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            log.info("PrincipalDetailService.loadUserByUsername");
+            log.info("LOGIN");
+            Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new BussinuessException(ExMessage.MEMBER_ERROR_NOT_FOUND));
+
+            return new PrincipalDetails(member);
+        }
+
+    }
+
+### 3. 로그인 성공
+
+    이 부분이 수행된다는 것은 loadUserByUsername() 메서드에서 성공적으로 회원조회 및 username, password를 통한 검증이 이루어졌다는 것을 의미.
+
+    이젠 직접 확인해 보기 위해, 반환받은 authentication 객체에서 PrincipalDetails 객체를 꺼내서 username/password를 출력해보자.
+
+    public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+        private final AuthenticationManager authentication~~;
+
+        // Login 요청을 하면 로그인 시도를 위해서 실행되는 함수
+        @Override
+        public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
+            log.info("로그인 시도 : JwtAuthenticationFilter.attemptAuthentication");
+
+            ObjectMapper om = new ~~~;
+
+            try {
+
+                // 1. username, password 받는다.
+
+                // 2. 정상적인 로그인 시도를 해본다.
+                Authentication authentication = 
+                        authenticationManager.authenticate(authenticationToken);
+
+                // 3. 로그인
+                // Authentication에 있는 인증된 Principal 객체를 PrincipalDetails 객체로 꺼낸다.
+                PrincipalDetails principalDetails = (PrincipalDetails) authenticatoin.getPrincipal();
+
+                // 4. authentication을 반환해준다.
+                return authentication;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    // attemptAuthentication() 실행 후 인증이 정상적으로 완료되면 실행된다.
+    // 따라서, 여기서 JWT토큰을 만들어서 request 요청한 사용자에게 JWT토큰을 response 해준다.
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+        log.info("인증 완료 : JwtAuthenticationFilter.successfulAuthentication");
+
+        super.successfulAuthentication(request, response, authResult);
+    }
+
+![authentication_encoderPassword](../img/authentication_encoderPassword.png)    
+
+    - 처음 요청 받았을 때 출력했던 principal, credentials가 암호화된것을 확인할 수 있다. 이는 실제 DB에 저장된 회원을 잘 조회해서 가져왔다는 것으로 회원 객체는 저장될 때 PasswordEncoder에 의해 password를 암호화해서 저장하기 때문이다.
+  
+### 4. authentication을 반환해준다.
+
+    authentication 객체를 SecuritySession에 저장해야 하므로 반환한다.
+    세션에 저장하면 편리하게 권한관리를 할 수 있다.
+    
+    public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+        private final AuthenticationManager authenticationManager;
+
+        // login 요청을 하면 로그인 시도를 위해서 실행되는 함수
+        @Override
+        public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+
+            ObjectMapper om = new ~~;
+            try {
+
+                // 1. username, password
+
+                // 2. 정상인지 로그인 시도를 해본다.
+
+                // 3. 로그인이 되었다.
+
+                // 4. authentication을 반한해준다.
+                log.info("4. authenticagtion 반환");
+                return authentication;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+![authentication_return](../img/authentication_return.png)
+
+    - 정상저긍로 모든 인증이 되고 자동적으로 successfulAuthentication() 메소드가 이어서 수행되는 것을 볼 수 있다.
+
+    - 여기서 JWT 토큰을 최종적으로 발행해서 반환해주면 클라이언트는 그것을 가지고 요청을 주면 된다.
+
+### 5. 최종 전체 로직
+
+    public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+        private final AuthenticationManager ~~ ;
+
+        // login 요청을 하면 로그인 시도를 위해서 실행되는 함수
+        @Override
+        public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+            log.info("로그인 시도 : JwtAuthenticationFilter.attemptAuthentication");
+
+            ObjectMapper om = new ~~;
+
+            try {
+
+                // 1. username, password
+                log.info("1. username, password 받는다.");
+                LoginReq login = om.readValue(request.getInputStream(), LoginReq.class);
+                log.info("login.toString());
+
+                // username, password를 이용해서 token 발급
+                UsernamePasswordAuthenticationToken authenticationToken = new Username~~(login.getUsername(), login.getPassword());
+                log.info(authenticationToken.getPrincipal().toString());
+                log.info("==========================================\n")
+
+                // 2. 정상인지 로그인 시도를 해본다. 
+                log.info("2. 정상인지 로그인 시도를 해본다.");
+                // -> 로그인 정보를 가지고 임시로 Auth 토큰을 생성해서 인증을 확인한다.
+                // -> DI받은 authenticationManager로 로그인 시도한다.
+                // -> DetailsService를 상속받은 PrincipalDetailsService가 호출되고 loadUserByUsername() 함수가 실행된다.
+                // authenticate()에 토큰을 넘기면 PrincipalDetailsService.class -> loadUserByUsername() 메소드 실행된다.
+                // DB에 저장되어있는 username & password가 일치하면 authentication이 생성된다.
+                log.info("-> Authenticate Start");
+                Authentication authentication =
+                    authenticationManager.authenticate(authenticationToken);
+                log.info("<- Authenticate End");
+                log.info("==========================================\n");
+
+                // 3. 로그인이 되었다.
+                log.info("3. 로그인 성공");
+                // 로그인이 되었다.
+                // Authentication에 있는 인증된 Principal 객체를 PrincipalDetails 객체로 꺼낸다.
+
+                // 4. authentication을 반환해준다.
+                // authentication 객체를 session에 저장해야 하므로 반환한다. 세션에 저장하면 편리하게 권한관리를 할 수 있다.
+                // 반환된 Authentication 객체가 세션에 저장된다.
+                log.info("4. authentication 반환");
+                return authentication;
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // attemptAuthentication() 실행 후 인증이 정상적으로 완료되면 실행.
+        // 따라서, 여기서 JWT 토큰을 마늘어서 request 요청한 사용자에게 JWT 토큰을 response 해준다.
+        @Override
+        protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response) AuthenicateException {
+            log.info("인증 완료 : JwtAuthenticationFilter.successfulAuthentication");
+
+            super.successfulAuthentication(request, response, authResult);
+        }
+    }
+
+![JwtAuthentication_AllResponse](../img/JwtAuthentication_AllResponse.png)    
+
+## part5 SpringBoot JWT login - client request, BasicAuthenticationFilter 이용한 JWT 검증.
+
+    username, Password를 이용한 검증은 완료된 상태로 다음 수행될 successfulAuthentication() 메서드에서 JWT 토큰을 발급해보자.
+
+### JwtAuthenticationFilter class
+    @Slf4j
+    @RequiredArgsConstructor
+    public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+        private final AuthenticationManager authenticationManager;
+
+        // login 요청을 하면 로그인 시도를 위해서 실행되는 함수
+        @Override
+        public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
+            log.info("로그인 시도 : JwtAuthenticationFilter.attemptAuthentication");
+            // 검증 완료
+        }
+
+        @Override
+        public Authentication successfulAuthentication(HttpServletRequest request, HttpServletResponse response) {
+            log.info("인증 완료 : JwtAuthentication.successfulAuthentication");
+        }   
+    }
+
+    이전에 생성해서 반환된 Authentication 객체가 authResult Parameter로 들어오고 있다. 해당 Auth 객체를 이용해서 토큰을 생성해본다.
+    
+    - PrincipalDetails principal = (PrincipalDetails) authResult.getPrincipal();
+
+    JWT 토큰을 만드는건 gradle에 추가한 implementation libaray를 통해 쉽게 생성할 수 있다.
+
+    String jwt = JWT.create()
+            .withSubject("JWT_토큰")
+            .withExpired(new Date(System.currentTimeMillis() + 6000 + 10))  // 만료시간
+            .withClaim("id", principal.getMember().getSeq()) // 회원 구분용 seq
+            .withClaim("username", principal.getMember().getUsername())
+            .sign(Algorithm.HMAC512("SecretKey@@!!!")); // signature를 생성하기 위한 SecretKey
+
+    - jwt가 생성되었고 이를 응답헤더에 추가해서 반환해준다.
+    - 클라이언트 전달받은 Jwt 토큰을 가지고 요청 때 마다 토큰을 가지고 요청하면된다.
+
+    응답헤더에 HTTP Bearer 방식이므로 Authorization : "Bearer_jwt_"를 추가한다. key-value 쌍으로 들어간다. (주의) Bearer 다음에 공백이 꼭 들어가야 한다.
+
+    response.addHeader("Authorization", "Bearer " + jwt); // jwt 응답 헤더에 추가
+    - 응답 메시지 Header에 jwt가 추가된다.
+
+![authentication_Header](../img/authentication_Header.png)
+
+    body에는 딱히 내용이 없고 Header에 정상적으로 Authorizaion - jwt 토큰이 담겨있는것을 확인할 수 있다.
+
+![authorizaion_encoded](../img/authorizaion_encoded.png)
+
+    이런식으로 header에는 해시기법, payload에 저장된 값, signature를 확인할 수 있다.
+
+    HASH{ 인코딩(jwt_header) +.+ 인코딩(jwt_payload) +.+ 서버_SecretKey} == jwt_Signature 여부
+
+### BasicAuthenticationFilter를 이용한 JWT 검증
+
+    근데, 여기서 JWT 인증 방식과 Session 인증 방식의 차이점이 또 존재한다.
+
+    ● Session 검증
+      - username&password LOGIN 요청 -> 
+        서버에서 세션ID 생성 -> 
+        클라이언트에서 쿠키에 세션ID를 저장 -> 
+        요청 때마다 쿠키값에 세션ID 유효여부 검증과 같은 방식으로 이뤄진다. 
+
+        이때 서버에서 세션ID 유효여부 검증은 HttpSession에서 제공하는 session.getAttribute("session_key")를 통해 내부적으로 알아서 이뤄지고 값을 가져올 수 있다.
+        
+    ● JWT 로직 검증
+      - username&password LOGIN 요청 ->
+        Authentication 생성 후 검증 -> 
+        검증 성공 시, Session 저장소에 저장 ->
+        Session 저장소에 저장소에 저장 ->
+        Authentication으로 JWT 토큰 발급 후 응답 헤더에 넣어서 반환
+
+    - 클라이언트가 요청 때 전달한 JWT 토큰에 대해 서버가 JWT 토큰이 유효한지 판단하는 부분이 없다. 따라서 해당 필터를 만들어줘야 한다.
+    이를 위해 인증 or 권한이 필요한 부분에서 실행되는 시큐리티 필터 중 BasicAuthenticationFilter를 상속하여 필터를 구현해본다.
+
+### JwtAuthorizationFilter extends BasicAuthenticationFilter
+
+    // 권한이나 인증이 필요한 특정 주소를 요청했을 때, BasicAuthenticationFilter를 타게 된다.
+    // 권한이나 인증이 필요하지 않다면 거치지 않는다.
+    @Slf4j
+    public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
+
+        private MemberRepository ~~ ;
+
+        public JwtAuthorizationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository) {
+            super(authenticationManager);
+            this.memberRepository = memberRepository;
+        }
+
+        // 인증이나 권한이 필요한 주소요청이 있을 때, 해당 필터를 거친다.
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException {
+            log.info("CHECKJWT : JwtAuthorizationFilter.doFilterInternal");
+
+            // 1. 권한이나 인증이 필요한 요청이 전달됨
+            String jwtHeader = request.getHeader("Authorization"); // Header에 들어있는 Authorization을 꺼낸다.(SpringSecurity Config) 
+
+![authorization_header_request](../img/authorization_header_request.png)
+
+            // 2. Header 확인
+            if (jwtHeader == null || !jwtHeader.startWith("Bearer")) {
+                chain.doFilter(request, resposne);
+                return; // 헤더가 비어있거나, 비어있지는 않지만 Bearer 방식이 아니라면 반환.
+            }
+
+            // 3. JWT 토큰을 검증해서 정상적인 사용자인지 확인
+            String jwtToken = request.getHeader("Authorization").replace("Bearer", "");
+            String username = null;
+            try {
+                username = JWT
+                        .require(Algorithm.HMAC512("SecretKey@@!!!"))
+                        .build()
+                        .verify(jwtToken)
+                        .getClaim("username")
+                        .asString();
+            } catch (Exception e) {
+                throw new BussinessException(ExMessage.JWT_ERROR_FORMAT);
+            }
+            - JWT 라이브러리를 이용해서 검증을 진행해본다.
+            - 적용했던 Hash 알고리즘으로 SecretKey를 해시하고, 
+            - 토큰에서 username 키에 해당하는 value를 문자열로 꺼낸다.
+          
+![authorication_wrongToken](../img/authorication_wrongToken.png)
+          
+
+            // 서명이 정상적으로 됨
+            if (username != null) {
+                // 4. 정상적인 서명이 검증되었으므로 username으로 회원을 조회한다.
+
+                // 5. jwt토큰 서명을 통해서 정상이면 Authentication 객체를 만들어준다.
+
+                // 6. 강제로 Security_Session에 접근항 Authentication 객체를 저장해준다.
+
+                chain.doFilter(request, response);
+            }
+        }
+    }
