@@ -1,5 +1,43 @@
 ## part1 SpringBoot JWT login - Filter에 대한 이해
 
+### 역할 축약
+
+    ● Authentication  
+    
+    사용자의 인증정보[id/password]를 저장하는 token을 가짐.(인증 후 최종 결과는 User객체/권한정보)담고 SecurityContextHolder에 저장.
+
+        1. usernamePasswordAuthenticationFilter 가 AuthenticationManager 에게 Authentication 객체를 전달
+
+        2. AuthenticationManager 는 인증의 전반적인 관리를 하고, 인증을 처리할 수 있는 AuthenticationProvider 를 찾는다.
+
+        3. AuthenticationProvider 가 UserDetailsService(loadUserByUsername()) 를 통해 Service 계층에서 Repository 계층에 접근하여 id에 해당하는  회원 객체를 Authentication 객체에 저장하여 권한 정보와 저장한다.
+
+        4. Authentication 객체를 AuthenticationManager 에 전달 후 다시,
+        UsernamePasswordAuthenticationFilter 에 전달 후 SecurityContext 에 저장한다.
+
+    ● AuthenticationProvider   
+
+    실제 인증에 대한 부분을 처리, 인증 전의 Authentication 객체를 받아서, 인증이 완료된 객체를 반환하는 역할을 한다.
+
+    ● AuthenticationManager 
+
+    인자로 Authentication 객체를 받는다.
+    Authentication 객체에 id, pw를 저장 후, AuthenticationManager에 보내 인증 과정을 거친다. (구현체는 ProviderManager)    
+
+    ● SecurityContext
+
+    Authentication 객체가 저장되는 보관소, 인증이 완료되면 HttpSession 에 저장되어 어플리케이션 전반에 걸쳐 전역적인 참조가 가능.
+
+    ● SecurityContextHolder
+
+    SecurityContext를 저장하는 저장소
+    (SecurityContextHolder - SecurityContext - Authentication - User)
+    위의 순서대로 앞의 객체가 뒤의 객체를 보관한다.
+
+    ● TokenProvider
+
+    JWT 토큰 관련 기능을 제공하는 클래스이다.
+
 ### Spring Security Configuration
 
     스프링 시큐리티를 사용하기 위해 기본적으로 설정파일을 작성해줘야 한다.
@@ -305,7 +343,7 @@
         private final AuthenticationManager authenticationManager;
 
         // login 요청을 하면 로그인 시도를 위해서 실행되는 함수
-        @Override
+        @Override 
         public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
             log.info("로그인 시도 : JwtAuthenticationFilter.attemptAuthentication");
 
@@ -508,10 +546,12 @@
         private final AuthenticationManager ~~ ;
 
         // login 요청을 하면 로그인 시도를 위해서 실행되는 함수
+        // Authentication 객체를 만들어서 리턴(AuthenticationManager를 통해)
         @Override
         public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
             log.info("로그인 시도 : JwtAuthenticationFilter.attemptAuthentication");
 
+            // 로그인 요청 시, 들어온 데이터를 객체로 변환
             ObjectMapper om = new ~~;
 
             try {
@@ -546,7 +586,7 @@
 
                 // 4. authentication을 반환해준다.
                 // authentication 객체를 session에 저장해야 하므로 반환한다. 세션에 저장하면 편리하게 권한관리를 할 수 있다.
-                // 반환된 Authentication 객체가 세션에 저장된다.
+                // 반환된 Authentication 객체가 세션에 저장된다-> 로그인 성공.
                 log.info("4. authentication 반환");
                 return authentication;
             } catch(IOException e) {
@@ -554,10 +594,10 @@
             }
         }
 
-        // attemptAuthentication() 실행 후 인증이 정상적으로 완료되면 실행.
-        // 따라서, 여기서 JWT 토큰을 마늘어서 request 요청한 사용자에게 JWT 토큰을 response 해준다.
+        // attemptAuthentication() 실행 후 인증이 정상적으로 완료되면 실행되는 메소드.
+        // 따라서, 여기서 JWT 토큰을 만들어서 request 요청한 사용자에게 JWT 토큰을 response 해준다.
         @Override
-        protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response) AuthenicateException {
+        protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) AuthenicateException {
             log.info("인증 완료 : JwtAuthenticationFilter.successfulAuthentication");
 
             super.successfulAuthentication(request, response, authResult);
@@ -615,9 +655,9 @@
 
     body에는 딱히 내용이 없고 Header에 정상적으로 Authorizaion - jwt 토큰이 담겨있는것을 확인할 수 있다.
 
-![authorizaion_encoded](../img/authorizaion_encoded.png)
+![authentication_encoded](../img/authentication_encoded.png)
 
-    이런식으로 header에는 해시기법, payload에 저장된 값, signature를 확인할 수 있다.
+    해당 토큰을 해싱해보면, 이런식으로 header에는 해시기법, payload에 저장된 값 (=signature)를 확인할 수 있다.
 
     HASH{ 인코딩(jwt_header) +.+ 인코딩(jwt_payload) +.+ 서버_SecretKey} == jwt_Signature 여부
 
@@ -626,19 +666,18 @@
     근데, 여기서 JWT 인증 방식과 Session 인증 방식의 차이점이 또 존재한다.
 
     ● Session 검증
-      - username&password LOGIN 요청 -> 
-        서버에서 세션ID 생성 -> 
-        클라이언트에서 쿠키에 세션ID를 저장 -> 
-        요청 때마다 쿠키값에 세션ID 유효여부 검증과 같은 방식으로 이뤄진다. 
+        1. username&password LOGIN 요청  
+        2. 서버에서 세션ID 생성  
+        3. 클라이언트에서 쿠키에 세션ID를 저장 
+        4. 요청 때마다 쿠키값에 세션ID 유효여부 검증과 같은 방식으로 이뤄진다. 
 
         이때 서버에서 세션ID 유효여부 검증은 HttpSession에서 제공하는 session.getAttribute("session_key")를 통해 내부적으로 알아서 이뤄지고 값을 가져올 수 있다.
         
     ● JWT 로직 검증
-      - username&password LOGIN 요청 ->
-        Authentication 생성 후 검증 -> 
-        검증 성공 시, Session 저장소에 저장 ->
-        Session 저장소에 저장소에 저장 ->
-        Authentication으로 JWT 토큰 발급 후 응답 헤더에 넣어서 반환
+        1. username&password LOGIN 요청 
+        2. Authentication 생성 후 검증  
+        3. 로컬 저장소 or 쿠키에 저장.
+        4. Authentication으로 JWT 토큰 발급 후 응답 헤더에 넣어서 반환
 
     - 클라이언트가 요청 때 전달한 JWT 토큰에 대해 서버가 JWT 토큰이 유효한지 판단하는 부분이 없다. 따라서 해당 필터를 만들어줘야 한다.
     이를 위해 인증 or 권한이 필요한 부분에서 실행되는 시큐리티 필터 중 BasicAuthenticationFilter를 상속하여 필터를 구현해본다.
@@ -674,6 +713,7 @@
             }
 
             // 3. JWT 토큰을 검증해서 정상적인 사용자인지 확인
+            log.info("3. JWT 토큰을 검증해서 정상적인 사용자인지, 권한이 맞는지 확인");
             String jwtToken = request.getHeader("Authorization").replace("Bearer", "");
             String username = null;
             try {
@@ -691,17 +731,219 @@
             - 토큰에서 username 키에 해당하는 value를 문자열로 꺼낸다.
           
 ![authorication_wrongToken](../img/authorication_wrongToken.png)
-          
 
-            // 서명이 정상적으로 됨
+            JWT 토큰 검증이 제대로 진행되었다면 Signature는 우리가 한 JWT임이 검증된것이다. 꺼낸 username을 가지고 Athentication 객체에 넣기위한 UserDetails 객체를 생성한다.
+
             if (username != null) {
+                // 서명이 정상적으로 됨
+                log.info("서명이 정상적으로 됨");
+
                 // 4. 정상적인 서명이 검증되었으므로 username으로 회원을 조회한다.
+                log.info("4. 서명이 검증되었다.");
+                log.info("Athentication 생성을 위해 username으로 회원 조회 후 PrincipalDetails 객체로 감싼다.");
+                Member member = memberRepository.findByUsername
+                (username)
+                        .orElseThrow(() -> new BusinessException(ExMessage.MEMBER_ERROR_NOT_FOUND));
+                PrincipalDetails principalDetails = new PrincipalDetails(member);
+                - JWT의 payload에서 꺼낸 username 값으로 회원을 조회한다.
+                - 해당 회원을 PrincipalDetails 객체로 감싼다.
+
+![authentication_signature_response](../img/authentication_signature_response.png)
 
                 // 5. jwt토큰 서명을 통해서 정상이면 Authentication 객체를 만들어준다.
+                log.info("5. Authentication 객체 생성");
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    principalDetails, null, principalDetails.getAuthorities());
+                - UsernamePasswordAuthenticationToken()을 통해 Authentication을 만들어준다.
+                - 로그인 때 username, password를 이용해서 Authentication을 만들었던것과 동일하다.
+                다만, Principal에 조회로 구한 PrincipalDetils 회원을 담고,
+                Credentials는 null로 비우고, 권한을 넣어준다.
+                (이미 검증되었기에, 비밀번호는 필요가 없다.)
 
                 // 6. 강제로 Security_Session에 접근항 Authentication 객체를 저장해준다.
+                log.info("6. SecuritySession에 접근하여 Authentication 객체 저장");ㄴ
+                SecurityContextHolder.getContext().setAuthentication(authentication); 
+                - SecurityContextHolder에 전달받은 JWT로 만든 Authentication을 저장해준다. Authentication에는 현재 권한이 들어있으므로 권한이 필요한 곳에 조회할 때, 해당 권한을 체크해 줄 것이다.
 
                 chain.doFilter(request, response);
             }
         }
     }
+
+    로그인 요청을 통해 JWT 발급
+    
+![authentication_test](../img/authentication_test.png)
+
+    발급 받은 JWT를 이용해서 요청
+    1. MEMBER
+
+![authentication_member_test](../img/authentication_member_test.png)    
+    - 정상적으로 요청/응답이 된다.
+    
+    2. MANAGER
+
+![authentication_manager_test](../img/authentication_manager_test.png)    
+    - 권한 부족으로 403 Forbidden이 발생한다.
+    - HTTP 403 Forbidden 클라이언트 오류 상태 응답 코드는 서버에 요청이 전달되었지만, 권한 때문에 거절되었다는 것을 의미.
+
+    3. AMIND
+    
+![authentication_admin_test](../img/authentication_admin_test.png)    
+    - 동일하게 403 Forbidden 발생
+
+### 참고
+
+    로그인을 통해 발급받은 JWT 토큰을 가지고 요청을 보내고, 권한에 따른 접근 제어까지 확인해보았다. 참고로 설정관련 값들을
+
+    public interface JwtProperties {
+        int EXPIRATION_TIME = 1000 * 60 * 10; // 10m
+        String TOKEN_PREFIX = "Bearer";
+        String HEADER_PREFIX = "Authorization";
+    }
+
+    이런식으로 인터페이스 클래스에 보관해서 사용하면 더욱 실수를 줄일 수 있다.
+
+    또한, 시크릿 값은 Github와 같은 저장소에 올리면 안되므로 gitignore에 추가해준 properties 파일에 담았다.
+
+![gitignore_secret](../img/gitignore_secret.png)
+
+## ADD - HttpHeader에 있는 JWT 처리
+
+    JWT는 HttpHeader에 담겨서 요청이 넘어오게 되고 이를 처리하는 방법 2가지를 알아보자. 
+
+### 1. UsernamePasswordAuthenticationFilter
+
+    UsernamePasswordAuthenticationFilter를 상속받은 CustomAuthenticationFilter에서 토큰을 통해 인증.
+
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpSerlvetResponse response) throws AuthenticationException {
+        log.info("인증 시도");
+        ObjectMapper om = new ~~();
+
+        try {
+            LoginDto loginDto = om.readValue(request.getInputStream(), LoginDto.class);
+            Authentication authentication = new UserPasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
+            return authenticationManager.authenticate(authentication);
+        } cathc (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+        log.info("인증 성공");
+        PrincipalUserDetails principal = (PrincipalUserDetails) authResult.getPrincipal();
+
+        String accessToken = jwtService.createAccessToken(principal.getUsername());
+        String refreshToken = jwtService.createRefreshToken();
+
+        Member memberByUsername = jwtService.getMemberByUsername(principal.getUsername());
+        jwtService.setRefreshTokenToUser(memberByUsername, refreshToken);
+
+        jwtService.setResponseOfAccessToken(resposne, accessToken);
+        jwtService.setResponseOfRefreshToken(response, refreshToken);
+        jwtService.setResponseMessage(true, resposne, "로그인 성공");
+    }
+
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, ServletResponse response, Authentication authResult) {
+        log.info("인증 실패");
+        ExMessage failMessage = failed.getMessage().equals(ExMessage.MEMBER_ERROR_NOT_FOUND);
+            ExMessage.MEMBER_ERROR_NOT_FOUND;
+            ExMessage.MEMBER_ERROR_PASSWORD;
+        jwtService.setResponseMessage(false, response, "로그인 실패" + ":" + failMessage);
+    }
+
+    attemptAuthentication에서 먼저 authenticate를 통해 인증을 진행하고 성공/실패에 따라 적절한 메소드에서 이어서 진행.
+
+### 2. SecurityContextHolder
+
+    public class JwtFilter extends GenericFilterBean {
+
+        private final JwtTokenProvider jwtTokenProvider;
+
+        public JwtFilter(JwtTokenProvider jwtTokenProvider) {
+            this.jwtTokenProvider = jwtTokenProvider;
+        }
+
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+
+            HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+            String token = jwtTokenProvider.resolveToken(httpServletRequest);
+        
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                SecurityContextHolder.getContext().setAuthentication(jwtTokenProvider.getAuthentication(token));
+            }
+
+            chain.doFilter(request, response);
+        }
+    }
+
+### 2-1 JwtProvider
+    public class JwtTokenProvider {
+
+        private final SecurityProperties securityProperties;
+
+        public JwtTokenProvider(SecurityProperties securityProperties) {
+            this.securityProperties = securityProperties;
+        }
+
+        public String resolveToken(HttpServletRequest request) {
+            String header = request.getHeader(securityProperties.getHeaderString());
+
+            if (header != null && header.startsWith(securityProperties.getTokenProperties().getTokenPrefix())) {
+                return header.substring(securityProperties.getTokenProperties().getTokenPrefix().length());
+            } else {
+                return null;
+            }
+        }
+
+        public boolean validateToken(String token) {
+            // 토큰 유효성 검사 로직 추가 (예시)
+            return true; // 유효할 경우 true 리턴
+        }
+
+        public Authentication getAuthentication(String token) {
+            // 토큰에서 인증 정보 추출 (예시)
+            return null; // 실제 인증 정보를 반환
+        }
+    }
+    header에서 jwt 헤더를 추출하고, 전역 객체인 SecurityContextHolder에 authentication 객체를 저장한다. 이후 Controller에서 해당 SecurityContext를 꺼내서 인가를 검증한다.
+
+### 2-2 userController
+
+    @Slf4j
+    @RestController
+    public class UserController {
+
+        private final UserJpaRepository userJpaRepository;
+
+        public UserController(UserJpaRepository userJpaRepository) {
+            this.userJpaRepository = userJpaRepository;
+        }
+
+        @GetMapping("/user")
+        public UserDto getUser() {
+
+            logger.info("GET USER");
+
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            
+            if (principal instanceof UserDetails) {
+                String username = ((UserDetails) principal).getUsername();
+                logger.info("principal: {}", username);
+
+                User user = userJpaRepository.findByUsername(username)
+                        .orElseThrow(() -> new NotFoundException("멤버가 없음"));
+
+                return UserDto.from(user);
+            } else {
+                throw new InternalAuthenticationServiceException("Can not found matched User Principal");
+            }
+        }
+    }
+
+
+
