@@ -62,7 +62,7 @@
 
 ### ● <a href="grammer/grammer_sum/security/tokenProvider.md">TokenProvider</a>
 
-### ● <a href="grammer/grammer_sum/security/jwtAuthenticationFilter.md">JwtAuthenticationFilter</a>
+### ● <a href="grammer/grammer_sum/security/SpringSecurity.md">SpringSecurity</a>
 
 ### ● <a href="grammer/grammer_sum/amazon_S3/amazonS3.md">AmazonS3</a>
 
