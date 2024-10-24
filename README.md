@@ -1,6 +1,4 @@
-# Inflearn_lectureList
-
-## 강의 목차
+# 인프런 강의 목차
 
 ## Servlet
 
@@ -38,48 +36,56 @@
 
 ### ● <a href="springmvc/spring_sum/fileupload.md">File upload</a>
 
-## Spring grammer & function 
+# Grammer   
 
-### ● <a href="grammer/grammer_sum/alertMessage">Controller_AlertMessage 처리</a>
+## Java
 
-### ● <a href="grammer/grammer_sum/model.md">Model(DTO/DOMAIN/VO/CommandObject)</a>
+### ● <a href="grammer/model.md">Model(DTO/DOMAIN/VO/CommandObject)</a>
 
-### ● <a href="grammer/grammer_sum/path.md">Path</a>
+### ● <a href="grammer/path.md">Path</a>
 
-### ● <a href="grammer/grammer_sum/SQL_Logback.md">Logback SQL</a>
+### ● <a href="grammer/stream().md">Stream()</a>
 
-### ● <a href="grammer/grammer_sum/transactionManager.md">TransactionManager</a>
+### ● <a href="grammer/Static.md">Static variable & method</a>
 
-### ● <a href="grammer/grammer_sum/modelAttribute_DTO.md">@ModelAttribute vs DTO Object Transfer </a>
+### ● <a href="grammer/abstract_interface.md">abstract vs interface</a>
 
-### ● <a href="grammer/grammer_sum/paging/Paging_@Pageable.md">SpringBoot - paging(@PageableDefault)</a>
+## Spring
 
-### ● <a href="grammer/grammer_sum/paging/Paging_Mybatis.md">SpringBoot - paging(MyBatis)</a>
+### ● <a href="grammer/alertMessage">Controller_AlertMessage</a>
 
-### ● <a href="grammer/grammer_sum/amazon_S3/amazonS3.md">AmazonS3</a>
+### ● <a href="grammer/session&cookie.md">Cookie & Session</a>
 
-### ● <a href="grammer/grammer_sum/amazon_S3/amazonS3_Config.md">AmazonS3_Config</a>
+### ● <a href="grammer/SQL_Logback.md">Logback SQL</a>
 
-### ● <a href="grammer/grammer_sum/security/tokenProvider.md">TokenProvider</a>
+### ● <a href="grammer/transactionManager.md">TransactionManager</a>
 
-### ● <a href="grammer/grammer_sum/security/SpringSecurity.md">SpringSecurity</a>
+### ● <a href="grammer/modelAttribute_DTO.md">@ModelAttribute vs DTO Object Transfer </a>
+### ● <a href="grammer/accessLevel.md">@NoArgsConstructor(AccessLevel.PROTECTED)</a>
 
-### ● <a href="grammer/grammer_sum/amazon_S3/amazonS3.md">AmazonS3</a>
+### ● <a href="grammer/document.md">document object</a>
 
-### ● <a href="grammer/grammer_sum/document.md">document object</a>
+### ● <a href="grammer/REST API.md">REST API</a>
 
-### ● <a href="grammer/grammer_sum/REST API.md">REST API</a>
+### ● <a href="grammer/aspect.md">Aspect</a>
 
-### ● <a href="grammer/grammer_sum/aspect.md">Aspect</a>
+### ● <a href="grammer/jackson.md">Jackson</a>
 
-### ● <a href="grammer/grammer_sum/jackson.md">Jackson</a>
+### Paging
 
-### ● <a href="grammer/grammer_sum/accessLevel.md">@NoArgsConstructor(AccessLevel.PROTECTED)</a>
+### ● <a href="grammer/paging/Paging_@Pageable.md">SpringBoot - paging(@PageableDefault)</a>
+### ● <a href="grammer/paging/Paging_Mybatis.md">SpringBoot - paging(MyBatis)</a>
 
-### ● <a href="grammer/grammer_sum/session&cookie.md">Cookie & Session</a>
+### Spring Security
 
-### ● <a href="grammer/grammer_sum/stream().md">Stream()</a>
+### ● <a href="grammer/security/SpringSecurity.md">SpringSecurity</a>
+### ● <a href="grammer/security/Security_signin&up.md">Security_signin&up</a>
+### ● <a href="grammer/security/tokenProvider.md">TokenProvider</a>
+### ● <a href="grammer/security/JWT_login.md">JWT_login</a>
+### ● <a href="grammer/security/JWT_implements.md">JWT_implements</a>
 
-### aspect(좀 더 자세하게 알아보자) 해설 추가 24/09/02
+### Amazon3
 
+### ● <a href="grammer/amazon_S3/amazonS3.md">AmazonS3</a>
+### ● <a href="grammer/amazon_S3/amazonS3_Config.md">AmazonS3_Config</a>
 
