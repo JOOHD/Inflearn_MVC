@@ -50,6 +50,10 @@
 
 ### ● <a href="grammer/abstract_interface.md">abstract vs interface</a>
 
+### ● <a href="grammer/Lambda.md">Lambda Expression</a>
+
+### ● <a href="grammer/GenericType.md">GenericType</a>
+
 ## Spring
 
 ### ● <a href="grammer/alertMessage">Controller_AlertMessage</a>
