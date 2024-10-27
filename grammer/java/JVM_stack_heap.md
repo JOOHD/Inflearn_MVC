@@ -61,10 +61,18 @@
 ![HeapArea](../img/HeapArea.png)  
 
     - new 키워드로 생성된 객체, 배열이 저장되는 곳
-    
-### Stack
 
+### static area
+
+    하나의 java 파일은 크게 field, constructor, method 로 구성된다.
+    그중 필드 부분에서 선언된 변수(전역변수)와 정적 멤버변수(static이 붙은 자료형) static 영역에 데이터를 저장한다.
+
+    static 영역의 데이터는 프로그램의 시작부터 종료가 될 때까지 메모리에 남아있게 된다.다르게 말하면 전역변수가 프로그램이 종료될 때까지 어디서든 사용이 가능한 이유이기도 하다.
+    
+### Stack area
+    
     Stack의 경우에는 정적으로 할당된 메모리 영역이다.
+    (데이터의 값이 저장되는 공간.)
 
     Stack에서는 Primitive 타입 (boolean, char, short, int, long, float, double) 의 데이터가 값이랑 같이할당이 되고,
 
@@ -72,8 +80,11 @@
 
     그리고 Stack 의 메모리는 Thread당 하나씩 할당 된다. 만약 새로운 스레드가 생성되면 해당 스레드에 대한 Stack이 새롭게 생성되고, 각 스레드 끼리는 Stack 영역을 접근할 수 가 없다.
 
-### Heap    
+    stack 영역은 LIFO(Last In First Out)의 구조를 갖고 변수에 새로운 데이터가 할당되면 이전 데이터는 지워진다.
 
+### Heap area   
+
+    1.
     Heap의 경우에는 동적으로 할당된 메모리 영역이다.
 
     힙 영역에서는 모든 Object 타입의 데이터가 할당이 된다. (참고로 모든 객체는 Object 타입을 상속받는다.)
@@ -84,7 +95,76 @@
 
     그리고 Heap 은 Stack 처럼 Thread 마다 하나씩있는게 아니라 여러개의 Thread가 있어도 힙은 단하나의 영역만 존재한다. 헷갈리지 말자.
 
-### 예제 코드
+    2.
+    인스턴스 생성 = "class variable = new class();"
+
+    참조현의 데이터 타입을 갖는 객체, 배열 등은 Heap 영역에 데이터가 저장.
+    이때 변수(객체, 객체변수, 참조변수)는 stack 영역의 공간에서 실제 데이터가 저장된 Heap 영역의 참조값(해시코드/메모리에 저장된 주소를 연결해주는 값)을 new 연산자를 통해 return.
+
+    다시말해, "실제 데이티를 갖고 있는 Heap 영역의 참조 값을 Stack 영역의 객체를 갖고 있다." 
+
+    이렇게 리턴 받은 참조 값을 갖고 있는 객체를 통해서만 해당 인스턴스를 핸들 할 수 있다.
+
+    ● 예제1
+    public class HeapAreaEx01 {
+
+        public static void main(String[] args) {
+            int[] a = null; // int형 배열 선언 및 stack 영역 공간 할당
+            System.out.println(a); // 결과 : null
+            a = new int[5]; // Heap 영역에 5개의 연속된 공간 할당 및 변수 a에 참조값 할당
+            System.out.printlnt(a); // 결과 : @14db3331 (참조값)
+        }
+    }
+
+    설명은 소스 코드의 주석 처리된 부분과 같다. 결국 a변수는 데이터가 저장된 Heap영역의 참조 값을 리턴 받아 갖고 있다.
+
+        - a 변수는 실제 데이터를 저장한 Heap 영역의 참조값을 가진다.
+
+        - int[] a = null;
+            - a라는 배열 변수가 stack 영역에 할당된다. 이때 a는 초기화되지 않았으므로 null을 가진다. 즉, 아직 어떤 객체도 가리키지 않는 상태.
+
+        - a = new int[5];
+            - Heap 영역에 int 5개의 연속된 메모리 공간을 생성한다. 이 배열은 각 요소가 기본값 0으로 초기화 된다.
+            - Heap에 생성된 배열 객체의 주소(참조값)가 a에 할당된다. 이제 a는 Heap의 배열 객체를 참조하게 된다.
+    
+    따라서 a변수는 Heap에 있는 실제 배열을 가리키는 참조값을 Stack에 저장하고 있는것이다.
+
+    ● 예제2
+    public class HeapAreaEx02 {
+
+        public static void main(String[] args) {
+            String str1 = new String("joker");
+            String str2 = new String("joker");
+            if (str1 == str2) {
+                System.out.println("같은 주소값 입니다.");
+            } else {
+                System.out.println("다른 주소값 입니다".);
+            }
+        }
+    }
+    
+    문자열을 저장하는 String도 참조형이다. new 연산자를 이용해서 생성하면 데이터는 Heap 영역에 저장되고, str1과 str2는 참조 값을 리턴 받는다. 저장된 주소가 다르기 떄문에 "=="으로 비교 시 "다른 주소값 입니다."가 출력되는 것이다. 
+
+    ● 예제3
+    class A{}
+
+    public class HeapArea {
+
+        public static void main(String[] args) {
+            A a = null; // A타입의 a객체 선언 및 stack 영역 공간 할당.
+            System.out.println(a); // 결과 : null
+            a = new A(); // Heap 메모리에 공간 할당 및 객체(a)에 참조값 할당
+            System.out.println(a); // 결과 : @15db9742
+        }
+    }
+
+    결국 "객체가 참조 값을 갖는다."
+
+![test_reference](../img/test_reference.png)
+
+    참고로 Heap에 저장된 데이터가 더 이상 사용이 불필요하다면 메모리 관리를 위해 JVM에 의해 알아서 해제된다. 이러한 기능을 GC라고 한다.
+
+### 예제 코드2
 
     public class Main {
 
@@ -143,3 +223,61 @@
     메서드의 파라미터인 list는 Heap에 할당 되어 있는 List를 가르킬 것이고,
     mySkill은 Heap 영역의 "java" String을 참조할 것이다.
     그리고 list 3번 index에 "python"이라는 값을 연결 시킨다.
+
+    그리고 저 메서드가 종료되면서 Stack에서는 Pop이 일어나면서 Stack에 list랑 mySkill은 날라가버린다.
+
+![test_skills_away](../img/test_skills_away.png)
+
+    public class Main {
+
+        public static void main(String[] args) {
+
+            String name = "kang";
+            System.out.println("Before Name : " + name);
+
+            changeName(name);
+            System.out.println("After Name 1 " + name);
+
+            name += " babo";
+            System.out.println("After Name 2 " + name);
+        }
+        public static void changeName(String s) {
+            s += " babo";
+        }
+    }
+
+    Before Name : Kang
+    After Name 1 : Kang
+    After Name 2 : Kang babo
+
+    내가 아까부터 설명했던 이론대로라면 After Name 1 도 kang babo가 나와야 한다. 
+
+    ● 그런데 왜 그냥 kang이 나온걸까?
+
+    String name = "kang";
+    여기 까지의 메모리 상태를 보면 다음과 같다.
+
+![test_name_kang](../img/test_name_kang.png)
+
+    changeName(name);
+
+    이 메서드가 실행될 때 "kang" object를 파라미터인 s에다가 복사를 하면서 changeName 메서드가 시작된다.
+
+    ● 그런데 List는 그대로 가리켰는데 changeName()는 왜 복사한 값을 가리킬까?
+
+    String이 immutable한 클래스이기 때문이다. 말그대로 변경할 수 없는, 불변의 객체라는 것이다.
+    String 이외에도 immutable한 클래스는 Boolean, Integer, Float, Long, Double 등이 있다. 반대로 mutable한 객체는 List, ArrayList, HashMap 등 컬렉션들이 대표적이다.
+
+    changeName 내부의 로직은 실제로 s에다 "babo"라는 문자열을 더하는 것처럼 보이지만 실제로는 새로운 String을 생성하는 것이다.
+
+![test_changeName](../img/test_changeName.png) 
+
+    하지만 우리가 프린트 찍은 내용은 name 이기 때문에, "kang"이라는 결과가 나온 것이다.
+    그리고 s는 메서드 끝나면서 pop 될 것이라 사라진다.
+
+    ● 다음은 name에 직접 "babo"를 붙여보면 아래처럼 될 것이다.
+
+![test_babo](../img/test_babo.png)
+
+    그렇기에 "kang babo"로 값이 나온다.
+
