@@ -46,6 +46,8 @@
 
 ### ● <a href="grammer/setter_method.md">Setter-Method</a>
 
+### ● <a href="grammer/builder_pattern.md">@Builder</a>
+
 ### ● <a href="grammer/model.md">Model(DTO/DOMAIN/VO/CommandObject)</a>
 
 ### ● <a href="grammer/path.md">Path</a>
