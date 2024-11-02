@@ -177,6 +177,7 @@ public class Main {
 
     2. 선택 필드 설정
     - 선택 필드인 gender 는 필요에 따라 설정할 수 있다.
+        - Builder 패턴에서는 필수적으로 받아야 하는 필드들은 생성자 매개변수로 받고, 선택적인 필드들은 메서드로 설정할 수 있도록 하는 것이 일반적이다.
 
         builder.gender(Gender.F);
 
@@ -220,4 +221,102 @@ public class Main {
 
     - 하지만 변수의 개수가 2개 이하이거나, 변경 가능성이 없을 경우에는 빌더 패턴의 장점을 누릴 수 없을테니 사용하지 않아도 될 것 같다.
 
+### project 적용
 
+    // Option class
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
+    @Entity
+    @Builder(toBuilder = true)
+    public class Option extends BaseTimeEntity {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Integer id;
+
+        @NotNull
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "OPTION_CATEGORY_ID")
+        private OptionCategory optionCategory;
+
+        @NotNull
+        @Column(unique = true)
+        private String name;
+
+        @NotNull
+        private Integer price;
+    }
+
+    Option modifyOption = Option.builder()
+                .optionCategory(optionCategory)
+                .name(request.getName())
+                .price(request.getPrice())
+                .build();
+
+    optionRepository.save(modifyOption.toBuilder()
+                .id(optionId.getId())
+                .build());
+
+    ● 설명
+
+    modifyOption 객체의 값들을 기반으로 새로운 객체를 생성하면서, 특정 필드(id)의 값을 optionId.getId()로 변경해 저장하려는 패턴이다.
+
+    .toBuilder()  
+    - modifyOption 객체를 복사한 빌더를 생성하여, 기존 데이터를 모두 Builder에 담고, 특정 필드를 변경하는 역할을 한다.
+
+    .id(optionId.getId()) 
+    - id 필드의 값을 optionId.getId()로 변경한다.
+    - 기존 modifyOption의 id 값이 optionId.getId()로 덮어씌워진다.
+    
+    .build()
+    - 모든 필터를 설정한 후, build() 메서드를 호출하여 새로운 Option 객체를 생성한다.
+    - 생성된 객체는 optionRepository.save(...)에 전달되어 저장된다.
+
+### project (가정 = 데이터 삽입)
+
+    Option 객체를 생성하고, 생성된 modifyOption 객체를 toBuilder() 메서드를 통해 일부 필드(id)를 변경하여 새롭게 저장하는 방식이다.
+
+    // 가정 : Request 객체에서 전달받은 값
+    String optionCategory = "음료";  
+    String optionName = "아메리카노"; 
+    int optionPrice = 3000;
+
+    // 초기 ID 값이 없는 상태로 Option 객체 생성
+    Option modifyOption = Option.builder()
+            .optionCategory(optionCategory) // optionCategory: "음료"
+            .name(optionName)               // name: "아메리카노"
+            .price(optionPrice)             // price: 3000
+            .build();                       // -> Option 객체가 생성되며, ID는 아직 없음
+
+    // 생성된 modifyOption 객체 상태 예시
+    // modifyOption: Option(optionCategory="음료", name="아메리카노", price=3000, id=null)
+
+    // ID가 있는 OptionId 객체로부터 ID를 가져옴
+    Long newId = 101L; // ex) optionId.getId()의 결가가 101이라고 가정
+
+    // modifyOption 객체의 모든 필드를 복사한 새로운 Builder 객체를 생성하고, ID를 업데이트
+    Option udpateOption = modifyOption.toBuilder() // modifyOption 값을 복사하여 Builder 생성
+            .id(newId)      // id: 101로 설정
+            .build();       // -> ID가 설정된 새로운 Option 객체가 셍성됨
+
+    // updatedOption: Option(optionCategory="음료", name="아메리카노", price=3000, id=101)
+
+    // 저장을 위한 코드
+    optionRepository.save(updateOption);    // updatedOption을 DB에 저장.
+
+    ● 설명
+
+    1. Option 객체 생성
+
+    - 처음 modifyOption 을 생성할 때, optionCategory, name, price 필드는 주어딘 값으로 초기화되지만, id 필드는 설정되지 않은 상태이다.
+    - modifyOption : Option(optionCategory="음료", name="아메리카노", price=3000, id=null)
+
+    2. ID 변경을 위한 toBuilder 사용
+
+    - modifyOption.toBuilder() 는 modifyOption의 상태를 그대로 복사한 Builder 객체를 반환한다. 이 빌더 객체에서 id 필드를 새 값(101)으로 설정한다.
+
+    3. 새 Option 객체 생성 및 저장
+
+    - build() 가 호출되면, ID가 101로 설정된 새로운 Option 객체 updateOption이 생성된다.
+    - 최종 객체 : Option(optionCategory="음료", name="아메리카노", price=3000, id=101)  
