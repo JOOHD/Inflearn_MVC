@@ -26,13 +26,52 @@
 
     @Bean 어노테이션을 통해 객체를 빈으로 등록하면, 스프링이 IoC 원칙에 따라 객체 생성과 관리를 대신해 준다.
 
-### @Bean의 역할과 사용 이유
+### @Bean 만드는 방법 2가지    
 
-    - @Bean을 사용하면 메서드의 리턴 객체를 스프링 빈으로 등록할 수 있다.
+    1. 클래스에 @Configuration을 메서드에는 @Bean을 붙이는 방법. (수동)
 
-    - 스프링 컨테이너가 @Bean이 붙은 메서드를 자동으로 호출해 객체를 생성하고, 이 객체를 싱글톤 빈으로 관리한다.
+    ● 역할
+    클래스 내에 @Bean 메서드를 정의하여 스프링 컨테이너에 등록할 빈들을 생성하고 설정할 수 있다.
 
-    - 직접적으로 객체의 생성 방식을 지정할 수 있어, 더 세밀하게 객체 생성을 제어하거나 조건부 객체 생성이 필요한 경우에도 유용하다.
+    주로 애플리케이션 전반의 설정을 담당하는 클래스에 붙인다.
+
+    ● 사용
+    스프링 컨테이너가 관리하는 여러 객체 간의 관계를 설정하거나, 외부 라이브러리나 특정 구성 요소에 대해 빈을 생성해야 할 때, 사용한다. 
+
+    2. 클래스에 @Component를 붙여 자동으로 만드는 방법. (자동)
+     
+    ● 역할 
+    @Component는 스프링이 자동으로 관리할 객체(빈)로 등록하기 위해 클래스에 붙이는 어노테이션입니다. 
+
+    @Service, @Repository, @Controller와 같은 어노테이션들도 @Component의 구체적인 하위 유형이며, 특정 용도로 관리하는 객체를 등록할 때 사용합니다.
+
+    ● 사용
+    @Component를 클래스에 붙이면, 스프링이 애플리케이션 실행 시, 해당 클래스의 객체를 자동으로 생성하고, 스프링 컨테이너에 등록하여 필요 시, 주입.
+
+### @Component vs @Configuration
+
+    - @Component : 스프링 빈으로 등록.
+    - @Configutaion : 여러 개의 빈을 생성, 애플리케이션 설정.
+
+### @Bean 사용 이유
+
+    "동일한 역할을 수행하는 객체를 여러 번 만들지 않아도 되기 때문"
+
+    ex)
+
+    public class LoginController {
+    private final LoginService loginService = new LoginService(); // 매번 객체 생성
+    }
+
+    public class ArticleController {
+        private final ArticleService articleService = new ArticleService(); // 매번 객체 생성
+    }
+
+    만일 스프링의 Bean 객체를 사용하지 않는다면, 각각의 객체마다, new 연산을 수행해 객체를 만들어야 한다. (동일한 객체가 아니기에 서로 가진 정보도 다르고, 메모리는 또 메모리대로 쓰는 등의 비효율적인 문제가 생긴다.)
+
+    그래서 싱글톤의 특징을 가진 bean을 사용한다면, 동일한 역할을 수행하는 객체를 여러 번 만들지 않아도 된다. 한 번 만들면, 재활용 할 수 있게 된다.
+
+    다시 말해, 스프링 컨테이너가 빈을 관리하므로 싱글톤 패턴을 적용시켜 동일한 인스턴스를 여러 곳에서 공유해 사용할 수 있다는 것이다.
 
 ### @Bean 사용 예시
 
@@ -41,14 +80,15 @@
 
         @Bean
         public UserRepository userRepository() {
-            return new UserRepositoryImpl(); // UserRepositoryImpl 객체를 빈으로 등록 and '반환된 객체'
-        }
+            return new UserRepositoryImpl(); // UserRepositoryImpl 객체를 빈으로 등록 (userRepository() = userRepositoryImpl 을 가지고 있다.)        }
 
         @Bean
         public UserService userService() {
-            return new UserService(userRepository()); // userRepository 빈을 주입해 UserService 객체 생성
+            return new UserService(userRepository()); // userRepository 빈을 주입(userRepositoryImpl을 가진) UserService 객체 생성
         }
     }
+    - 결국 정리하면 userService 클래스에 userRepository 클래스를 주입하기 위한 객체를 빈으로 등록하는 코드를 보여주는 코드이다.
+
     - @Configuration : 스프링이 빈 설정 클래스로 인식하게 하는 어노테이션이다.
 
     - @Bean이 붙은 메서드 : 이 메서드들이 반환하는 객체가 스프링 컨테이너에 빈으로 등록된다.
@@ -172,13 +212,16 @@
 
     - AppConfig를 사용한 설정: AppConfig에서 의존성을 주입하므로 UserService는 UserRepository의 구체적인 구현체에 의존하지 않습니다.
 
-    ● @Autowired vs @Bean
+### @Bean vs @Autowired vs @RequiredArgsConstructor
 
     - @Bean : Bean을 직접 생성하고 등록하는 역할을 한다. 주로 AppConfig에서 사용되며, 스프링 컨테이너가 이 객체들을 관리하고 재사용하도록 설정한다.
 
     - @Autowired : 주입할 대상의 의존성을 자동으로 찾아서 주입하는 역할을 한다. @Bean으로 이미 등록된 객체(Bean)을 주입하거나 @Component로 관리 중인 Bean을 주입할 때 사용한다.
+
+    - @RequiredArgsConstructor : lombok에서 제공하는 어노테이션으로,
+    @Autowired 생략과 final 필드가 자동으로 주입된다.
   
-    ● Bean 생성과 DI 설정
+### Bean 생성과 DI 설정
     - 다음과 같은 AppConfig는 UserService가 UserRepository를 의존할 때 이를 생성자 주입을 통해 설정.
 
     @Configuration
@@ -201,12 +244,11 @@
     - 생성자 주입 설정
         userService 메서드는 userRepository 메서드에서 생성된 객체를 직접 생성자의 인수로 전달한다.
 
-    ● AppConfig 로 Bean 설정을 하는 이유
+### AppConfig 로 Bean 설정을 하는 이유
 
     - 중앙화된 구성 : AppConfig로 모든 Bean을 관리하면 객체 생성과 의존성 관리가 한곳에 모여 있어 구성이 명확해지고 유지보수가 쉬워진다.
 
     - 유연성 : 상황에 따라 특정 구현체를 교체하거나 다른 환경에서 다른 설정을 적용할 때, AppConfig의 설정만 바꾸면 되므로 코드 변경 없이 구성을 쉽게 조정할 수 있다.    
-
 
 ### Spring Container 생성
 
