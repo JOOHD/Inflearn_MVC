@@ -36,7 +36,15 @@
 
 ### ● <a href="springmvc/spring_sum/fileupload.md">File upload</a>
 
-# Grammer   
+# Grammer
+
+## API
+
+### ● <a href="grammer/api/kakaopay/kakaoLogin_js(1).md">kakaoLogin(Javascript)</a>
+
+### ● <a href="grammer/api/kakaopay/kakaopay_Dday(2).md.md"></a>
+
+### ● <a href="grammer/api/kakaopay/kakaopay_api(3).md">kakaoPay(API)</a>
 
 ## Java
 
@@ -67,6 +75,8 @@
 ### ● <a href="grammer/JVM_stack_heap.md">JVM(Stack/Heap)</a>
 
 ### ● <a href="grammer/builder_pattern.md">@Builder</a>
+
+### ● <a href="grammer/lombok_annotation.md">Lombok Annotation</a>
 
 ## Spring
 
