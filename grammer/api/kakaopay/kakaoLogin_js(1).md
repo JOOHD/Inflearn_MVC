@@ -238,3 +238,82 @@
     저장된 회원정보인지 확인
     - email로 테이블에서 회원정보를 조회한 결과값이 null이면, 신규회원으로 저장
     - null이 아닌 경우, 저장된 유저정보를 그대로 반환해서 기존회원임을 알려준다.
+
+### Service ('비밀번호 암호화하여 비교' BCrypt적용)
+
+    ● BCryptPasswordEncoder 설정
+
+    @Configuration
+    public class SecurityConfig {
+
+        @Bean
+        public BCryptPasswordEncoder passwordEncoder() {
+            return new BCrtyptPasswordEncoder();
+        }
+    }
+
+    @Service
+    public class UserService {
+
+        private final UserMapper userMapper;  
+        private final BCryptPasswordEncoder passwordEncoder;  // BCryptPasswordEncoder 의존성 추가 
+
+        // 카카오 로그인 처리 로직
+        public User loginWithKakao(kakaoLoginForm form) {
+            User user = User.builder()
+                            .email(form.getEmail())
+                            .name(form.getName())
+                            .img(form.getImg())
+                            .loginType("KAKAO")
+                            .build();
+
+            User savedUser = userMapper.getUserByEmail(user.getEmail());
+
+            // 이미 존재하는 사용자는 DB에서 가져온 savedUser를 반환하고, 존재하지 않으면 새로 추가한 후 해당 user 객체를 반환.
+            if (savedUser != null) {
+                return savedUser; // 사용자가 존재하므로, DB에서 찾은 사용자 객체를 반환
+            } else { // 사용자가 존재하지 않으므로, 새로 추가 후 새로 만든 사용자 객체를 반환
+                userMapper.addUser(user);
+                return user;
+            }
+        }
+
+        // 일반 로그인 처리 로직 (rawPassword = 사용자가 입력한 값)
+        public User loginWithNormal(User user, String rawPassword) {
+            User savedUser = userMapper.getUserByEmail(user.getEmail());
+
+            if (savedUser != null && savedUser.getLoginType().equals("NORMAL")) {
+                if (checkPassword(savedUser, rawPassword)) {
+                    return savedUser;
+                } else {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+                }
+            } else if (savedUser != null && savedUser.getLoginType().equals("KAKAO")) {
+                throw new UnsupportedOperationException("카카오 로그인 사용자는 비밀번호 변경이 불가능합니다.");
+            }
+            
+            return null;
+        }
+
+        // 비밀번호 검증 메서드
+        private boolean checkPassword(User savedUser,String rawPassword) {
+            return passwordEncoder.matches(rawPassword, savedUser.getPassword());
+        }
+
+        // 일반 사용자 등록 시, 비밀번호 암호화 저장
+        public void registerUser(User user, String rawPassword) {
+            user.setPassword(passwordEncoder.encode(rawPassword)); // 비밀번호를 암호화하여 설정
+            userMapper.addUser(user);
+        }
+
+        // 비밀번호 변경 로직
+        public User updatePassword(User user, String newPassword) {
+            if ("KAKAO".equals(user.getLoginType())) {
+                throw new UnsupportedOperationException("카카오 로그인 사용자는 비밀번호 변경이 불가합니다.")
+            }
+
+            user.setPassword(passwordEncoder.encode(newPassword)); // 새 비밀번호를 암호화하여 저장
+            userMapper.updateUser(user);
+            return user;
+        }
+    }

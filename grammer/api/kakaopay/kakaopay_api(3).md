@@ -179,6 +179,182 @@
 
             User user = (User)SessionUtils.getAttribute("LOGIN_USER");
             List<CartDto> carts = cartMapper.getCartByUserNo(user.getNo());
+
+            String[] artNames = new String[carts.size()];
+            for (CartDto cart : carts) {
+                for (int i=0; i < carts.size(); i++) {
+                    cartNames[i] = cart.getClassTitle();
+                }
+            }
+
+            // -1 : 첫 번째 항목을 제외한 나머지 항목의 개수를 구하기 위한 것.
+            String itemName = cartNames[0] + "그외" + (carts.size()-1);
+            log.info("강좌이름들:" + itemName);
+            String order_id = user.getNo() + itemName;
+
+            // 카카오가 요구한 결제요청 request 값을 담아준다.
+            MultiValueMap<String, String> parameters = new LinkedMultiValueMap<String, String>();
+            parameters.add("cid", "TC0ONETIME");
+            parameters.add("partner_order_id", order_id);
+            parameters.add("partner_user_id", "inflearn");
+            parameters.add("item_name", itemName);
+            parameters.add("quantity", String.valueOf(carts.size()));
+            parameters.add("total_amount", String.valueOf(totalAmount));
+            parameters.add("tax_free_amount", "0");
+            parameters.add("approval_url", "http://localhost/order/pay/completed"); // 결제승인시 넘어갈 url
+            parameters.add("cancel_url", "http://localhost/order/pay/cancel"); // 결제취소시 넘어갈 url
+            parameters.add("fail_url", "http://localhost/order/pay/fail"); // 결제 실패시 넘어갈 url
+
+            log.info("구매자 주문 아이디 :" + parameters.get("partner_order_id"));
+
+            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
+            
+            // 외부 url 요청 통로 열기
+            RestTemplate template = new RestTemplate();
+            String url = "http://kapi.kakao.com/v1/payment/ready";
+
+            // Template으로 값을 보내고 받아온 ReadyResponse값 readyResponse에 저장.
+            ReadyResponse readyResponse = template.postForObject(url, requestEntity, ReadyResponse.class);
+
+            log.info("결재준비 응답객체: " + readyResponse);
+
+            // 받아온 값 return
+            return readyResponse;
+        }
+
+        // 결제 승인요청 메서드
+        public ApproveResponse payApprove(String tid, String pgToken) {
+
+            User user = (User)SessionUtils.getAttribute("LOGIN_USER");
+            List<CartDto> carts = cartMapper.getCartByUserNo(user.getNo());
+
+            // 주문명 만들기
+            String[] cartNames = new String[carts.size()];
+            for(CartDto cart: carts) {
+                for(int i=0; i< carts.size(); i++) {
+                    cartNames[i] = cart.getClassTitle();
+                }
+            }	
+            String itemName = cartNames[0] + " 그외" + (carts.size()-1);
+            
+            String order_id = user.getNo() + itemName;
+
+            // request값 담기.
+            MultiValueMap<String, String> parameters = new LinkedMultiValueMap<String, String>();
+            parameters.add("cid", "TC0ONETIME");
+            parameters.add("tid", tid);
+            parameters.add("partner_order_id", order_id); // 주문명
+            parameters.add("partner_user_id", "회사명");
+            parameters.add("pg_token", pgToken);
+            
+            // 하나의 map안에 header와 parameter값을 담아줌.
+            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
+            
+            // 외부url 통신
+            RestTemplate template = new RestTemplate();
+            String url = "https://kapi.kakao.com/v1/payment/approve";
+            // 보낼 외부 url, 요청 메시지(header,parameter), 처리후 값을 받아올 클래스. 
+            ApproveResponse approveResponse = template.postForObject(url, requestEntity, ApproveResponse.class);
+            log.info("결재승인 응답객체: " + approveResponse);
+            
+            return approveResponse;
+        }
+
+        // header() 셋팅
+        private Httpheaders getHeaders() {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "kakaoAK Admin Key");
+            headers.set("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+            return headers;
         }
     }
+
+### payReady 결제준비 메서드 설명
+
+    ● 주요 로직 설명
+
+    - 결제 준비를 위한 요청을 보내고, 결제 준비 응답을 받는 로직이다.
+    payReady 메서드는 결제 준비 요청을 카카오페이 API에 보내기 위해 필요한 파라미터들을 설정하고, 이를 전송하는 과정.
+
+    ● 기본 흐름 
+
+    1. 주문명 생성
+    
+        for (int i = 0; i < carts.size(); i++) {
+            cartNames[i] = cart.getClassTitle();
+        }
+        - 각 장바구니 항목의 getClassTitle() 메서드를 호출하여 상품명을 배열에 저장한다.
+
+        - String itemName = cartName[0] + "그외" + (carts.size()-1);
+          - 첫 번째 상품명과 나머지 상품의 개수를 기반으로 주문명을 생성한다.
+
+          ex) itemName = "커피 그외2"(cartName[0] + "그외" + carts.size()-1)
+
+    2. 결제 요청 파라미터 구성:
+
+        - 카카오페이 결제 요청에 필요한 파라미터들을 MultiValueMap<String, String>에 담습니다. 주요 파라미터는 다음과 같습니다:
+
+        - cid: 카카오페이 상점 ID (고정값: "TC0ONETIME")
+        - partner_order_id: 주문 고유 ID (사용자 번호와 주문명 결합)
+        - partner_user_id: 판매자 ID (예: "inflearn")
+        - item_name: 상품명
+        - quantity: 구매 수량 (장바구니의 크기)
+        - total_amount: 총 결제 금액 (예시에서 전달되는 totalAmount)
+        - tax_free_amount: 면세 금액 (예시에서는 0)
+        - approval_url, cancel_url, fail_url: 결제 성공/취소/실패 후 이동할 URL들.          
+
+    3. 결제 준비 요청
+
+        - HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
+
+            - 요청 파라미터와 헤더를 HttpEntity로 감싸서 카카오페이에 보낼 준비를 한다.
+
+        - RestTemplate tempate = new RestTemplate();
+        
+            - RestTemplate을 사용하여 외부 URL로 POST 요청을 보낸다.
+
+        - ReadyResponse readyResponse = template.postForObject(url, requestEntity, ReadyResponse.class);:
+
+            - 카카오페이 API로 결제 준비 요청을 보내고, 응답을 ReadyResponse 객체로 받는다.
+
+    4. 결제 준비 응답 처리
+
+        - 결제 준비 응답(ReadyResponse)을 반환하고, 로그로 응답 정보를 기록.
+
+### payApprove 결재승인 메서드 설명
+
+    ● 주요 로직 설명
+
+    - 사용자가 셜제 승인을 요청하면 카카오페이 API에 필요한 값들을 요청 파라미터로 설정하고, RestTemplate 을 사용하여 카카오페이 서버에 HTTP 요청을 보내는 방식이다.
+
+    ● 기본 흐름
+
+    1. 사용자 정보 및 장바구니 정보 가져오기
+
+        - User 객체는 SessionUtils.getAttribute(""LOGIN_USER")를 통해 세션에서 로그인된 사용자 정보를 가져온다.
+
+        - carts 는 cartMapper.getCartByUserNo(user.getNo())를 통해 사용자의 장바구니에서 선택된 상품 목록을 가져온다.
+
+    2. 주문명 생성
+
+        - cartNames 배열을 통해 장바구니에 담긴 상품들의 이름을 가져온다. 이 이름을 기반으로 주문명을 생성하는데, 장바구니가 하나 이상일 경우 "그외" 와 남은 상품 개수를 추가하여 주문명을 만든다.
+
+    3. 결제 요청 파라미터 구성
+
+        - 결제 요청에 필요한 tid, pgToken, order_id 등의 파라미터 값을 MultiValueMap에 담는다. 
+        여기서 중요한 부분은 카카오페이에 전달하는 order_id, partner_order_id, pg_token 등이다.
+
+        - order_id는 결제 정보에 대한 고유 식별자로 생성되며, partner_user_id는 판매자(회사) 정보를 나타낸다.
+
+    4. 결재 승인 요청
+
+        - HTTP POST 요청을 카카오페이의 결제 승인 API
+        (https://kapi.kakao.com/v1/payment/approve)에 보낸다.
+
+        - header 와 parameter 는 HttpHeaders 오 HttpEntity 를 통해 설정된다. header에는 Authorization이 포함되어 있으며, 이는 카카오페이의 Admin key를 포함한 값이다. 
+
+    5. 카카오페이 결재 승인 응답
+     
+        - 카카오페이 서버로부터 받은 응답은 ApproveResponse 객체로 매핑되어 반환된다.           
 
