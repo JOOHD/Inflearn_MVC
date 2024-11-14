@@ -42,7 +42,7 @@
 
 ### ● <a href="grammer/api/kakaopay/kakaoLogin_js(1).md">kakaoLogin(Javascript)</a>
 
-### ● <a href="grammer/api/kakaopay/kakaopay_Dday(2).md.md"></a>
+### ● <a href="grammer/api/kakaopay/kakaopay_coupon(2).md.md">kakaopay_coupon</a>
 
 ### ● <a href="grammer/api/kakaopay/kakaopay_api(3).md">kakaoPay(API)</a>
 
@@ -77,6 +77,8 @@
 ### ● <a href="grammer/builder_pattern.md">@Builder</a>
 
 ### ● <a href="grammer/lombok_annotation.md">Lombok Annotation</a>
+
+### ● <a href="grammer/exception.md">Exception</a>
 
 ## Spring
 

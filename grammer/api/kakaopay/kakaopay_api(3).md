@@ -322,6 +322,13 @@
 
         - 결제 준비 응답(ReadyResponse)을 반환하고, 로그로 응답 정보를 기록.
 
+    ● 흐름 요약
+
+    1. 사용자가 결제 준비를 시작하면, payReady 메서드가 호출된다.
+    2. 사용자의 장바구니와 결제 관련 정보를 기반으로 요청 파라미터가 생성.
+    3. 요청 파라미터를 카카오페이 결제 준비 API에 보내고, 결제 준비 결과를 응답으로 받는다.
+    4. 결제 준비 응답을 받아 후속 작업을 진행할 수 있다. 
+
 ### payApprove 결재승인 메서드 설명
 
     ● 주요 로직 설명
@@ -358,3 +365,80 @@
      
         - 카카오페이 서버로부터 받은 응답은 ApproveResponse 객체로 매핑되어 반환된다.           
 
+    ● 흐름 요약
+
+    1. 사용자가 셜제 버튼을 누르면, 카카오페이 결제 승인 요청이 이루어진다.
+    2. tid, pg_token, order_id 등 필수 데이터를 파라미터로 카카오페이에 요청을 보낸다.
+    3. 카카오페이는 결제 승인을 처리하고 응답을 보내준다.
+    4. 결제 성공 여부에 따라 후속 작업을 진행한다.
+ 
+ ### OrderController
+
+    - @Autowired 는 많아서 생략.
+    
+    @Sl4fj  
+    @Controller
+    // 세션에 저장된 값을 사용할 때, 쓰는 어노테이션, session 에서 없으면, model 까지 흝어서 찾아냄
+    @SessionAttribute({"tid", "order"})
+    public class OrderController {
+
+        // 카카오페이 결제 요청
+        @GetMapping("/order/pay")
+        public @ResponseBody ReadyResponse payReady(@ReqeustParam(name = "total_amount") int totalAmount, Order order, Model model) {
+            
+            log.info("주문정보:" + order);
+            log.info("주문가격:" + totalAmount);
+
+            // 카카오 결제 준비하기 - 결제요청 service 실행.
+            ReadyResponse readyResponse = kakaopayService.payReady(totalAmount);
+
+            // 요청처리후 받아온 결제고유 번호(tid)를 model에 저장.
+            model.addAttribute("tid", readyResponse.getTid());
+
+            log.info("결제고유 번호:" + readyResponse.getTid());
+
+            // Order 정보를 모델에 저장
+            model.addAttribute("Order", order);
+
+            return readyResponse; // 클랑이언트에 보냄.(tid, next_redirect_pc_url이 담겨있음.)
+        }
+
+        // 결제승인요청
+        @GetMapping("/order/pay/completed")
+        public String payCompleted(
+            @RequestParam("pg_token") String pgToken,                   @ModelAttribute("tid") String,
+            @ModelAttribute("order"), Order order, Model model) {
+
+                log.info("결제승인 요청을 인증하는 토큰:" + pgToken);
+                log.info("주문정보:" + order);
+                log.info("결제고유 번호: " : tid);
+
+                // 카카오 결제 요청하기
+                ApproveResponse approveResponse = kakaopayService.payApprove(tid, pgToken);
+
+                // 5. payment 저장
+                // orderNo, payMathod, 주문명.
+                // 카카오 페이로 넘겨받은 결제정보값을 저장.
+                Payment payment = Payment.builder()
+                        .paymentClassName(approveResponse.getItem_name())
+                        .payMathod(approveResponse.getPayment_method_type())
+                        .payCode(tid)
+                        .build();
+
+                orderService.saveOrder(order, payment);
+
+                return "redirect:/orders";
+        }
+
+        // 결제 취소시 실행 url
+        @GetMapping("/order/pay/cancel")
+        public String payCancel() {
+            return "redirect:/carts";
+        }
+        
+        // 결제 실패시 실행 url    	
+        @GetMapping("/order/pay/fail")
+        public String payFail() {
+            return "redirect:/carts";
+        }    
+    }
