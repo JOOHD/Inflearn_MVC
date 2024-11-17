@@ -78,8 +78,6 @@
 
 ### ● <a href="grammer/lombok_annotation.md">Lombok Annotation</a>
 
-### ● <a href="grammer/exception.md">Exception</a>
-
 ## Spring
 
 ### ● <a href="grammer/alertMessage">Controller_AlertMessage</a>
@@ -100,6 +98,11 @@
 ### ● <a href="grammer/aspect.md">Aspect</a>
 
 ### ● <a href="grammer/jackson.md">Jackson</a>
+
+### Exception
+
+### ● <a href="grammer/exception.md">Exception</a>
+### ● <a href="grammer/handlerCustomException.md">HandlerCustomException</a>
 
 ### Paging
 

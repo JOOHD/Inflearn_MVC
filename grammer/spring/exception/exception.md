@@ -19,12 +19,12 @@
 
     자바는 실행 시, 발생할 수 있는 오류를 클래스로 정의하였다.
 
-![exception_tree](../img/exception_tree.png)    
+![exception_tree](/grammer/img/exception_tree.png)    
 
     예외 클래스의 계층구조를 살펴보면 Exception(예외)와 Error(에러)로 나누어져 있다.
     Exception 클래스는 모든 예외의 조상 클래스이며, Exception 또한 Checked 예외와 Unchecked 예외로 나누어져 있다.
 
-![checked_unchecked](../img/checked_unchecked.png)    
+![checked_unchecked](/grammer/img/checked_unchecked.png)    
 
     - Unchecked 예외는 실행 도중 발생하는 예외로 RuntimeException을 칭하며, 개발자의 실수에 의해서 발생될 수 있는 예외들로 자바의 프로그래밍 요소들과 관계가 깊은 예외이다.
 
@@ -136,7 +136,7 @@
 
     ● 발생한 예외를 처리하는 방법에는 3가지 방법이 있다.
 
-![exception_process](../img/exception_three.png)       
+![exception_process](/grammer/img/exception_three.png)       
 
 ### 예외처리 방법 1. 예외 복구 try ~ catch문
 
@@ -284,7 +284,7 @@
 
     Checked 예외의 경우
 
-![checked_Exception_problem](../img/checked_Exception_problem.png) 
+![checked_Exception_problem](/grammer/img/checked_Exception_problem.png) 
 
     각 메소드가 예외를 처리하지 못하고 넘겨줄 때 메소드 모두 throws 예외에 의존하고 있다.
 
@@ -417,3 +417,121 @@
     }
 
     + 예외를 전환할 때에는 반드시 기존예외를 포함해서 스택 트레이스를 남기도록 합시다. 스택 트레이스를 남겨야 변환되기 전의 예외(SQLException)를 확인할 수 있습니다.
+
+## 프로젝트 exception 구현
+
+### 1. @ExceptionHandler 를 활용한 개별 예외 처리
+    - 특정 컨트롤러 내에서 발생한 예외를 처리.
+    - 컨트롤러 클래스에서 정의도니 예외만 처리
+
+    ex)
+        @RestController
+        @RequestMapping("/api/orders")
+        public class OrderController {
+
+            @GetMapping("/{id}")
+            public String getOrder(@PathVariable Long id) {
+                if (id <= 0) {
+                    throw new IllegalArguemntException("Order ID must bew greater than 0");
+                }
+                return "Order: " + id;
+            }
+
+            @ExceptionHandler(IllegalArgumentException.class)
+            public ResponseEnitty<String> handlerIllegalArgumentException(IllegalArgumentException ex) {
+                return ResponseEntity.badRequest().body("Error: " + ex.getMessage());
+            }
+        }
+
+        - 장점 : 특정 컨트롤러에 대해 세밀한 예외 처리가 가능.
+        - 단점 : 모든 컨트롤러마다 작성해야 하므로 코드 중복 발생.
+
+### 2. @ControllerAdvice 를 활용한 전역 예외 처리
+
+    - 전역 예외 처리를 제공하며, 프로젝트 전반에 걸쳐 발생하는 예외를 한 곳에서 처리.
+
+    ex)
+        @RestControllerAdvice
+        public class GlobalExceptionHandler {
+
+            @ExceptionHandler(IllegalArgumentException.class) 
+            public ResposneEntity<String> handlerIllegalArgumentException(IllegalArgumentException ex) {
+                return ResponseEntity.badRequest().body("Error: " + ex.getMessage());
+            }
+
+            @ExceptionHandler(Exception.class)
+            public ResponseEntity<String> handleGeneralException(Exception ex) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("An unexpected error occurred: " + ex.getMessage());
+            }
+        }
+
+        - 장점 : 코드 중복 줄임, 공통 로직으로 재사용 가능.
+        - 단점 : 세부 컨트롤러 수준에서 예외 처리를 구분하기 어려울 수 있다.
+    
+### 3. ResponseStatusException
+
+    - Spring Boot에서 자주 사용되는 간단한 예외 처리 방법으로, 특정 HTTP 상태와 메시지를 함께 반환할 수 있다.
+    
+    ex)
+        @GetMapping("/order/{id}")
+        public String getOrder(@PathVariable int id) {
+            if (id <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid Order Id");
+            }
+            return "ORder ID: " + id;
+        }
+
+### 4. Custom Exception 
+
+    정의 :
+
+    스프링에서 제공하는 예외들을 제외한 프로젝트에서 발생하는 특별한 예외를 처리하기 위해 개발자가 커스터마이즈한 방식
+
+    스프링이 제공하는 기본 예외
+    ex)
+        MethodArgumentNotValidException, 
+        ex)
+            요청 본문에 포함된 DTO에서 유효성 검사 실패 시 발생 (예: 필수 값 누락, 형식 오류 등).
+
+        MethodArgumentTypeMismatchException
+        ex)
+            입 불일치 시 발생 (예: 숫자 대신 문자열 전달).
+
+    개발자가 커스터마이징 한 예외
+    ex)
+        CustomException 
+        비즈니스 로직에서 발생하는 예외
+        ex)
+            MEMBER_NOT_EXISTS("존재하지 않는 회원입니다.", BAD_REQUEST),
+            ORDER_NOT_EXISTS("존재하지 않는 주문입니다.", BAD_REQUEST),
+    
+
+### 5. @ResponseStatus
+
+    - 커스텀 예외에 HTTP 상태를 직접 설정할 수 있는 간단한 방식.
+
+    ex)
+        @ResponseStatus(HttpStatus.NOT_FOUND)
+        public class OrderNotFoundException extends RuntimeException {
+            public OrderNotFoundException(String message) {
+                super(message);
+            }
+        }
+
+        - 자동으로 HTTP 404 상태와 메시지를 반환합니다.
+
+### 6. Spring Validation & BindingResult        
+
+    - 요청 데이터 검증에 실패했을 때, 자동으로 예외를 발생시키거나 커스텀 처리를 할 수 있다.
+
+    ex)
+        @PostMapping("/orders")
+        public ResponseEntity<String> createOrder(@Valid @RequestBody OrderRequest request, BindingResult bindingResult) {
+            if (bindingReslt.hasErrors()) {
+                return ResponseEntity.badRequest().body("Validation failed: " + bindingResult.getFieldError().getDefaultMessage()); 
+            }
+            return ResponseEntity.ok("Order created");
+        }
+
+    ● 일반적으로 @ControllerAdvice + Custom Exception 방식이 가장 널리 사용됩니다.        

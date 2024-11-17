@@ -20,7 +20,7 @@
 
     ● Spring Security Architecure flow
 
-![Architecure_flow](../img/Architecture_flow.png)
+![Architecure_flow](/grammer/img/Architecture_flow.png)
 
     1. HTTP 요청을 하면, AuthenticationFilter가 요청을 가로챈다.
 
@@ -44,7 +44,7 @@
 
 ## main module
 
-![main_module](../img/main_module.png)    
+![main_module](/grammer/img/main_module.png)    
 
 ### 1. ecurityContextHolder
 

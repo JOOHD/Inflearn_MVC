@@ -5,7 +5,7 @@
 ### part1.Pageable - 정의 
     Spring에서 제공하는 Pagination을 위한 interface 이다.
 
-![pageable_structure](../img/pageable_structure.png)
+![pageable_structure](/grammer/img/pageable_structure.png)
 
     위에 구조로 실제 구현체인 PageRequest를 사용한다.
 
@@ -93,7 +93,7 @@
 
     ● 결과
 
-![pageable_result](../img/pageable_result.png)
+![pageable_result](/grammer/img/pageable_result.png)
 
 ### part1.Pageable - 테스트
     public ResponseEntity<BaseResponse> findMessageByChatRoomId(
@@ -110,7 +110,7 @@
 
     - 페이지 당 데이터 객수를 2개로 설정한 pagenation에서 0번째 페이지를 가져와 보자
 
-![pageable_test](../img/pageable_test.png)
+![pageable_test](/grammer/img/pageable_test.png)
 
     - 로그에서도 정상적으로 Pageable 에 값이 넘어온것을 확인 가능하다.
         ex) log.info : size = 2, page = 0, sorted = UNSORTED  
@@ -196,7 +196,7 @@
     - 다음음 검색창이다. form data를 해당 주소로 GET하는 걸 볼 수 있다.
     input에 데이터를 입력하게 되면 Controller가 해당 데이터를 받아 지지고 볶은 다음에 searchPage에 보낸다. 그럼 searchPage가 데이터를 받아 화면을 구성한다.
 
-![pageable_search_test](../img/pageable_search_test.png)
+![pageable_search_test](/grammer/img/pageable_search_test.png)
 
 ### part2.Pageable - paging
     ● Service
@@ -223,7 +223,7 @@
     
     ● 결과
 
-![paging_result](../img/paging_result.png)    
+![paging_result](/grammer/img/paging_result.png)    
 
     - 페이지 사이즈가 10이고, id를 기준으로 내림차순 정렬되었다.
 
@@ -325,7 +325,7 @@
 
     - 위에서 만든 ReqeustList class의 파일이 실제로 서비스단에서 쓰이는 부분이다. 빌더 패턴으로 data, pageable 파라미터에 데이터를 주입하나 requestList 변수에는 아래와 같이 값이 세팅된다.
 
-![pageable_requestList](../img/pageable_requestList.png)
+![pageable_requestList](/grammer/img/pageable_requestList.png)
 
     - PageRequest 객체는 Pageable interface를 상속받고 있는데, 이 정보에는 정렬 정보, 페이지 offset, page와 같은 정보가 담겨있따. 또한 리턴 타입을 Page<T>으로 설정했는데 이는 일반적인 게시판 형태의 페이징에서 사용된다.
     
@@ -587,4 +587,4 @@
 
     여기까지 추가한 결과는 아래와 같다. 만약 1,2,... 10까지의 블록을 조절하고 싶다면 pageBlock 변수에 값을 변경하면 된다.
 
-![pageable_mybatis_result](../img/pageable_mybatis_result.png)    
+![pageable_mybatis_result](/grammer/img/pageable_mybatis_result.png)    

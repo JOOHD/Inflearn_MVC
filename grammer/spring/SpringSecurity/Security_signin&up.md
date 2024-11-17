@@ -18,7 +18,7 @@
     3. 모든 요청은 인증이 되어야 접근 가능.
     4. 기본 로그인 페이지 제공.
 
-![Security_please_signin](../img/Security_signin.png) 
+![Security_please_signin](/grammer/img/Security_signin.png) 
 
     + application.properties에 기본 name/password 설정이 가능하다.
 

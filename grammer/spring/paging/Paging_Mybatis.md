@@ -166,7 +166,7 @@
     이제 테이블에 대량의 데이터를 INSERT 해주면 된다. 자가 복사를 이용할 때는 테이블 구조를 확인해서 필수로 값이 입력되어야 하는 칼럼을 우선적으로 체크해야 한다. 
     tb_post 테이블은 전체 칼럼 중 id와 날짜를 제외한 모든 칼럼에 필수로 값이 입력되어야 한다.
 
-![paging_table_structure](../img/paging_table_structure.png)   
+![paging_table_structure](/grammer/img/paging_table_structure.png)   
 
     4.자가 복사 쿼리 실행하기
     DBMS 툴에서 다음의 SQL 쿼리를 실행하면 된다. 쿼리를 실행할 때마다(테이블 전체 데이터 * 2)만큼의 데이터가 INSERT 된다.
@@ -177,31 +177,31 @@
 
     다음은 자가 복사 쿼리를 5번 실행한 결과입니다.
 
-![paging_selfCopy](../img/paging_selfCopy.png)
+![paging_selfCopy](/grammer/img/paging_selfCopy.png)
 
 ### 7.리스트 페이지 테스트 
     1. 쿼리 스트링 파라미터가 없는 경우
     리스트 페이지에 접속해 보면 가장 마지막으로 등록된 데이터를 기준으로 10건이 출력된다.
 
-![no_query_parameter](../img/no_query_parameter.png)
+![no_query_parameter](/grammer/img/no_query_parameter.png)
 
     여기서 포인트는 findAll 쿼리의 LIMIT 구문이다. LIMIT의 offset은 page(현재 페이지 번호)와 recordSize(페이지당 출력할 데이터 개수)를 기준으로 계산되는데, 따로 전달한 파라미터가 없기 때문에 리스트 페이지에 접근하는 시점에 SearchDto 클래스의 생성자에 의해 page는 1로, recordSize는 10으로 객체가 생성된다.
 
-![param_result](../img/param_result.png)
+![param_result](/grammer/img/param_result.png)
 
     실행된 쿼리의 LIMIT 구문은 getOffset() 과 getRecordSize()의 결과값인 (0, 10)으로 처리된다.
 
-![findAll_query](../img/findAll_query.png)
+![findAll_query](/grammer/img/findAll_query.png)
 
     2. 쿼리 스트링 파라미터가 있는 경우
     이번에는 URL에 강제로 파라미터(page=5, recordeSize=10)를 연결한 후 리스트 페이지로 접근한 결과이다.
 
-![query_parameter](../img/query_parameter.png)
+![query_parameter](/grammer/img/query_parameter.png)
 
     page와recordSize를 파라미터로 전달했기 때문에 LIMIT 구문의 offset과 recordSize에 변화가 생긴다.
 
-![param_result2](../img/param_result2.png)  
-![findAll_query2](../img/findAll_query2.png)
+![param_result2](/grammer/img/param_result2.png)  
+![findAll_query2](/grammer/img/findAll_query2.png)
 
 ### 8.Pagination 처리용 클래스 추가하기
     브라우저에서 URL에 강제로 파라미터를 연결했을 때 리스트 데이터가 정상적으로 출력되는 걸 확인했으니, 지금부터는 실전이다.
@@ -598,15 +598,15 @@
     - URL에 쿼리 스트링이 정상적으로 연결됨을 확인하면
       - localhost:8080/post/list.do?page=5&recordSize=10&pageSize=10 
       - 
-![pagingTest](../img/pagingTest.png)
+![pagingTest](/grammer/img/pagingTest.png)
 
     2. 5페이지에서 다음 페이지(>)버튼을 세 번 클릭한 결과.
     
-![pagingTest2](../img/pagingTest2.png)
+![pagingTest2](/grammer/img/pagingTest2.png)
 
     3. 마지막 페이지에서 이전 페이지(<) 버튼을 세 번 클릭한 결과.
     
-![pagingTest3](../img/pagingTest3.png)    
+![pagingTest3](/grammer/img/pagingTest3.png)    
 
 ### 마치며
     여기까지가 기본 적인 페이징 기능 구현입니다. 
@@ -707,7 +707,7 @@
 
         - 이제, list 페이지에서 searchType, keyword 를 세팅하고 검색해 보면, searchType, keyword가 파라미터로 함께 전송된다.
       
-![param_result3](../img/param_result3.png)      
+![param_result3](/grammer/img/param_result3.png)      
 
         - 쿼리 스트링 파라미터 연결 시,
           - locathost:8080/post/list.do?page=1&recordSize=10&pagSize=10&searchType=writer&keyword=테스터1000
@@ -792,11 +792,11 @@
 ### 6.검색 기능 테스트
     전체 검색과 제목을 기준으로 검색 기능을 테스트한 결과이다.
 
-![findAll_keyword_1000](../img/findAll_keyword_1000.png)
+![findAll_keyword_1000](/grammer/img/findAll_keyword_1000.png)
 
-![count_query_test](../img/count_query_test.png)
+![count_query_test](/grammer/img/count_query_test.png)
 
-![findAll_query_test](../img/findAll_query_test.png)
+![findAll_query_test](/grammer/img/findAll_query_test.png)
 
 ### 7.keryword 검색 조건 유지하기
     모든 경우에서 문제없이 검색 기능이 작동하고 있다. 하지만 검색 버튼을 클릭하면 검색 조건이 풀려버린다. 
@@ -961,7 +961,7 @@
         ● 코드 해석
         기존에는 deleteForm을 그릴 때 게시글 번호만 hidden으로 넘겼는데, 지금은 전달받은 쿼리 스트링 파라미터를 전부inputHtml에 담아서 form에 추가한다.
 
-![deleteForm_structure](../img/deleteForm_structure.png)  
+![deleteForm_structure](/grammer/img/deleteForm_structure.png)  
 
     7. PostController의 deletePost() 메서드 수정
         게시글을 삭제하면 게시글 번호(id)와 이전 페이지 정보(쿼리 스트링)가 함께 전송되기 때문에, 
@@ -1000,24 +1000,24 @@
 
     9. 이전 페이지 정보 유지 테스트
  
-![deleteForm_test](../img/deleteForm_test.png)
+![deleteForm_test](/grammer/img/deleteForm_test.png)
 
     - 15페이지 최상단의 180번 게시글 상세 페이지로 이동
     
-![deleteForm_test2](../img/deleteForm_test2.png)
+![deleteForm_test2](/grammer/img/deleteForm_test2.png)
 
     - 상세 페이지에서 '뒤로' 버튼을 클릭하면, 상세 페이지로 이동하기 전의 검색 조건과 페이지 번호가 유지된다.
 
-![deleteForm_test3](../img/deleteForm_test3.png)
+![deleteForm_test3](/grammer/img/deleteForm_test3.png)
 
     - 다음은 전체 검색으로 '테스트77'을 검색한 후 마지막(36) 페이지로 이동.
     
-![deleteForm_test4](../img/deleteForm_test4.png)    
+![deleteForm_test4](/grammer/img/deleteForm_test4.png)    
 
     - 36페이지의 2번 게시글 상세 페이지 삭제
      
-![deleteForm_test5](../img/deleteForm_test5.png)
+![deleteForm_test5](/grammer/img/deleteForm_test5.png)
 
     - 2번 게시글이 삭제된 상태로, 이전 페이지 정보가 정상적으로 유지된다.
   
-![deleteForm_test6](../img/deleteForm_test6.png)  
+![deleteForm_test6](/grammer/img/deleteForm_test6.png)  

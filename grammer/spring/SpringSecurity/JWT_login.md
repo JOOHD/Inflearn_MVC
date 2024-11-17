@@ -105,12 +105,12 @@
     지금 JWT를 사용하기 위해 스프링 시큐리티를 설정하고, CORS로 인한 차단을 해제하기 위해 CorsConfig 클래스 내에 CorsFilter 클래스를 새로 만들어줬으며, JWT 이외의 방식에서 사용되는 session, http basic, loginForm 등의 인증방식을 제거해줬다.
     스프링 시큐리티를 사용하고자 한다면 기본적으로 세팅해야 하는 부분이다.    
 
-![HttpRequest&Response_map](../img/HttpRequest&Response_map.png)    
+![HttpRequest&Response_map](/grammer/img/HttpRequest&Response_map.png)    
 
     위의 사진은 HttpRequest&Response에 대한 Spring의 처리 절차를 보여준다.
     Filter가 request, response를 가장 먼저 만가게 되고, Filter에 우리가 사용하는 Spring Security Filter도 포함이 되는 것이다.
 
-![Filter_map](../img/Filter_map.png)    
+![Filter_map](/grammer/img/Filter_map.png)    
 
     정리 해보면, 서비스에 접근하는 사람들을 검증하기 위해 요청자가 Login 시, 발급 받았던 토큰 jwt를 확인하므로 Authentication(인증)을 하는 것이고,
     이후 권한을 확인하는 Authorization(인가)을 하게 되는 것이다.
@@ -171,9 +171,9 @@
 
     - 요청 시, Authorization에 "token2"를 넣어서 보내는 경우 
 
-![authorization_token2](../img/authorization_token2.png)
+![authorization_token2](/grammer/img/authorization_token2.png)
 
-![token2_console](../img/token2_console.png)
+![token2_console](/grammer/img/token2_console.png)
 
     - security filter에 token2 걸러진 것을 확인할 수 있다.
 
@@ -181,9 +181,9 @@
 
     - 요청 시, Authorization에 "token"을 넣어서 보내는 경우
 
-![authorization_token](../img/authorization_token.png)
+![authorization_token](/grammer/img/authorization_token.png)
 
-![token_console](../img/token_console.png)
+![token_console](/grammer/img/token_console.png)
 
     - 정상적인 필터에서 처리되어 모든 필터가 순차적으로 진행된 것을 확인할 수 있다.
 
@@ -251,7 +251,7 @@
         4. details : 인증 부가 정보
         5. Authenticated : 인증 여부 (Boolean)    
         
-![authentication_flow](../img/Authentication_flow.png)
+![authentication_flow](/grammer/img/Authentication_flow.png)
 
 ### UserDetails를 상속받는 PrincipalDetails 클래스 생성
 
@@ -314,7 +314,7 @@
     이전 포스터에서 정리한 내용을 기반으로 로직을 작성했다. 회원 로그인을 검증하기 위한 UsernamePasswordAuthenticationFilter를 상속받아,
     로그인 검증을 하고 토큰을 발급받는 JwtAuthenticationFilter 클래스를 구현해본다.
 
-![login_authentication](../img/login_authentication.png)    
+![login_authentication](/grammer/img/login_authentication.png)    
 
 ### login_authentication_flow
 
@@ -497,7 +497,7 @@
         super.successfulAuthentication(request, response, authResult);
     }
 
-![authentication_encoderPassword](../img/authentication_encoderPassword.png)    
+![authentication_encoderPassword](/grammer/img/authentication_encoderPassword.png)    
 
     - 처음 요청 받았을 때 출력했던 principal, credentials가 암호화된것을 확인할 수 있다. 이는 실제 DB에 저장된 회원을 잘 조회해서 가져왔다는 것으로 회원 객체는 저장될 때 PasswordEncoder에 의해 password를 암호화해서 저장하기 때문이다.
   
@@ -533,7 +533,7 @@
         }
     }
 
-![authentication_return](../img/authentication_return.png)
+![authentication_return](/grammer/img/authentication_return.png)
 
     - 정상저긍로 모든 인증이 되고 자동적으로 successfulAuthentication() 메소드가 이어서 수행되는 것을 볼 수 있다.
 
@@ -604,7 +604,7 @@
         }
     }
 
-![JwtAuthentication_AllResponse](../img/JwtAuthentication_AllResponse.png)    
+![JwtAuthentication_AllResponse](/grammer/img/JwtAuthentication_AllResponse.png)    
 
 ## part5 SpringBoot JWT login - client request, BasicAuthenticationFilter 이용한 JWT 검증.
 
@@ -651,11 +651,11 @@
     response.addHeader("Authorization", "Bearer " + jwt); // jwt 응답 헤더에 추가
     - 응답 메시지 Header에 jwt가 추가된다.
 
-![authentication_Header](../img/authentication_Header.png)
+![authentication_Header](/grammer/img/authentication_Header.png)
 
     body에는 딱히 내용이 없고 Header에 정상적으로 Authorizaion - jwt 토큰이 담겨있는것을 확인할 수 있다.
 
-![authentication_encoded](../img/authentication_encoded.png)
+![authentication_encoded](/grammer/img/authentication_encoded.png)
 
     해당 토큰을 해싱해보면, 이런식으로 header에는 해시기법, payload에 저장된 값 (=signature)를 확인할 수 있다.
 
@@ -704,7 +704,7 @@
             // 1. 권한이나 인증이 필요한 요청이 전달됨
             String jwtHeader = request.getHeader("Authorization"); // Header에 들어있는 Authorization을 꺼낸다.(SpringSecurity Config) 
 
-![authorization_header_request](../img/authorization_header_request.png)
+![authorization_header_request](/grammer/img/authorization_header_request.png)
 
             // 2. Header 확인
             if (jwtHeader == null || !jwtHeader.startWith("Bearer")) {
@@ -730,7 +730,7 @@
             - 적용했던 Hash 알고리즘으로 SecretKey를 해시하고, 
             - 토큰에서 username 키에 해당하는 value를 문자열로 꺼낸다.
           
-![authorication_wrongToken](../img/authorication_wrongToken.png)
+![authorication_wrongToken](/grammer/img/authorication_wrongToken.png)
 
             JWT 토큰 검증이 제대로 진행되었다면 Signature는 우리가 한 JWT임이 검증된것이다. 꺼낸 username을 가지고 Athentication 객체에 넣기위한 UserDetails 객체를 생성한다.
 
@@ -748,7 +748,7 @@
                 - JWT의 payload에서 꺼낸 username 값으로 회원을 조회한다.
                 - 해당 회원을 PrincipalDetails 객체로 감싼다.
 
-![authentication_signature_response](../img/authentication_signature_response.png)
+![authentication_signature_response](/grammer/img/authentication_signature_response.png)
 
                 // 5. jwt토큰 서명을 통해서 정상이면 Authentication 객체를 만들어준다.
                 log.info("5. Authentication 객체 생성");
@@ -772,23 +772,23 @@
 
     로그인 요청을 통해 JWT 발급
     
-![authentication_test](../img/authentication_test.png)
+![authentication_test](/grammer/img/authentication_test.png)
 
     발급 받은 JWT를 이용해서 요청
     1. MEMBER
 
-![authentication_member_test](../img/authentication_member_test.png)    
+![authentication_member_test](/grammer/img/authentication_member_test.png)    
     - 정상적으로 요청/응답이 된다.
     
     2. MANAGER
 
-![authentication_manager_test](../img/authentication_manager_test.png)    
+![authentication_manager_test](/grammer/img/authentication_manager_test.png)    
     - 권한 부족으로 403 Forbidden이 발생한다.
     - HTTP 403 Forbidden 클라이언트 오류 상태 응답 코드는 서버에 요청이 전달되었지만, 권한 때문에 거절되었다는 것을 의미.
 
     3. AMIND
     
-![authentication_admin_test](../img/authentication_admin_test.png)    
+![authentication_admin_test](/grammer/img/authentication_admin_test.png)    
     - 동일하게 403 Forbidden 발생
 
 ### 참고
@@ -805,7 +805,7 @@
 
     또한, 시크릿 값은 Github와 같은 저장소에 올리면 안되므로 gitignore에 추가해준 properties 파일에 담았다.
 
-![gitignore_secret](../img/gitignore_secret.png)
+![gitignore_secret](/grammer/img/gitignore_secret.png)
 
 ## ADD - HttpHeader에 있는 JWT 처리
 
