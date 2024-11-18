@@ -535,3 +535,64 @@
         }
 
     ● 일반적으로 @ControllerAdvice + Custom Exception 방식이 가장 널리 사용됩니다.        
+
+### Exception 종류
+
+    1. MethodArgumentNotValidException
+
+    발생 조건 : @Valid 사용하여, DTO 검증 중 유효성 검사 실패.
+    사용 위치 : @RequestBody, @ModelAttribute 데이터 바인딩 시.
+
+    2. MethodArgumentTypeMismatchException
+
+    발생 조건 : @PathVariable, @RequestParam에서 전달된 값의 타입이 예상 타입과 일치하지 않을 때.
+    사용 위치 : 컨트롤러의 요청 매핑 파라미터.
+
+    3. MissingServletRequestParameterException
+
+    발생 조건 : @RequestParam으로 명시된 필수 파라미터가 누락된 경우.
+    사용 위치 : 컨트롤러 메서드에서 요청 매핑 파라미터 처리.
+
+    ex)
+        @GetMapping("/search")
+        public String search(@RequestParam String query) {
+            // query가 누락되면 해당 Exception 발생
+            return "검색어: " + query;
+        }
+
+    4. HttpMessageNotReadableException
+
+    발생 조건 : 요청 본문(@RequestBody)의 JSON 데이터가 잘못된 형식이거나 역직렬화가 실패할 경우.
+    사용 위치 : JSON 요청 처리.
+
+    ex)
+        // 잘못된 요청 예시
+        {"name" : "joo", "age" : "not-a-number"} 
+
+    5. HttpRequestMethodNotSupportedException
+
+    발생 조건 : 지원되지 않는 HTTP 메서드로 요청이 들어올 경우
+    사용 위치 : 잘못된 HTTP 메서드로 컨트롤러 호출.
+
+    ex)
+        @PostMapping("/users")      
+        public String createUser() {
+            return "사용자 생성";
+        }
+        // GET/users 요청 시 예외 발생.
+
+    6. MissingServletRequestParException
+
+    발생 조건 : Multipart 요청 (@RequestPart)에서 파일이나 파트가 누락된 경우
+    사용 위치 : 파일 업로드 처리.
+
+    ex)
+        @PostMapping("/upload")
+        public String uploadFile(@RequestPart MultipartFile file) {
+            // file 이 누락되면 Missing~Exception 발생
+            return "업로드 성공";
+        }
+
+    위에 예외 이외에도 여러가지의 예외가 더 있다. 이런 예외들은 스프링에서 기본적으로 제공되며, 각각의 예외 상황에 맞게 @ExceptionHandler or @ControllerAdvice 를 사용하여 처리할 수 있다.
+
+    CustomExcepton 은 위와 같은 예외들과는 별도로, 애플리케이션에서 발생할 수 있는 비즈니스 로직 관련 예외를 처리하는 데 사용된다.
