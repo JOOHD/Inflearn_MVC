@@ -154,7 +154,7 @@
 
     - 로직 끝나는 시간은 try가 끝난 이후 finally 문에서 실행해준다.
 
-![aop_timeMillis](../img/aop_timeMillis.png)    
+![aop_timeMillis](/grammer/img/aop_timeMillis.png)    
 
     ● findMembers
 
@@ -171,7 +171,7 @@
         }
     }
 
-![aop_springContainer](../img/aop_springContainer.png)
+![aop_springContainer](/grammer/img/aop_springContainer.png)
 
     - 클래스마다 시간 측정 로직을 하나하나 붙여줌 -> 문제 발생
 
@@ -200,7 +200,7 @@
     -> 공통 관심 사항 // 핵심 관심 사항으로 분리 -> 관심 분리.
     -> 공통 관심 사항을 한 곳에 다 모아서 구현한 후, 원하는 곳에 적용.
 
-![aop_springContainer2](../img/aop_springContainer2.png)
+![aop_springContainer2](/grammer/img/aop_springContainer2.png)
 
 
 ### 시간 측정 로직의 AOP 구현
@@ -288,11 +288,11 @@
 
     - 시작부터 스프링 빈 자체가 올라가며 start, end 와 걸린 시간이 로그로 찍힌다.
 
-![aop_server_console](../img/aop_server_console.png)
+![aop_server_console](/grammer/img/aop_server_console.png)
 
     - 웹 프라우저를 띄운 후, 회원 목록을 클릭하면,
 
-![aop_server_console2](../img/aop_server_console2.png)
+![aop_server_console2](/grammer/img/aop_server_console2.png)
 
     회원 목록 조회와 관련된 요소들 (Controller, Service, Repository)이 순서대로 전부 실행되고, 각 소요시간이 출력됨을 알 수 있다.
 
@@ -320,7 +320,7 @@
 
     ● AOP 적용 전 의존관계/흐름
 
-![aop_di_flow](../img/aop_di_flow.png)
+![aop_di_flow](/grammer/img/aop_di_flow.png)
 
     @Autowired
     public MemberController(MemberService memberService) {
@@ -332,7 +332,7 @@
 
     ● AOP 적용 후 의존관계/흐름
 
-![aop_di_flow2](../img/aop_di_flow2.png)   
+![aop_di_flow2](/grammer/img/aop_di_flow2.png)   
 
     - 중간에 AOP 가 끼어든 상태
     - AOP가 중간에서 가짜(by proxy) memberService를 만듦 (클라이언트가 요청한 메소드 가로챔)
@@ -340,49 +340,101 @@
 
         -> 결과적으로 memberController가 호출한 것은 가짜 memberService
 
-![aop_di_fake](../img/aop_di_fake.png)   
+![aop_di_fake](/grammer/img/aop_di_fake.png)   
 
     - 실제로 getClass를 이용해 확인한 결과
     - memberService를 복제해 조작한 클래스가 객체(=가짜 memberService)가 호출 됐음을 확인 가능 == 프록시가 주입됨
 
     따라서, AOP는 DI가 기반으로 되어있기에 가능한 기술이라고도 볼 수 있다.
 
-### AOP 적용한 로깅
+### AOP 적용한 프로젝트
 
-    - 특정 패키지의 메서드 실행 전후로 로그를 기록.
+    AOP는 공통적으로 관심 있는 기능을 구현할 때 사용.
 
-    @Aspect
-    @Component
-    @Slf4j
-    public class LoggingAspect {
+    하나의 서버에는 여러개의 메서드가 있기 마련인데, 로그를 찍거나, 들어오는 매개변수와 리턴되는 결과를 보고 싶다던가, 메서드 실행 시간을 알고 싶은 경우에 사용한다. 또한 모든 메서드에 해당 기능을 코드에 작성하면 코드가 길어지기 때문에 가독성에 좋지않은 부분을 보완하고자 사용한다.
 
-        @PointCut("execution(* com.example.service.."(..))") // 특정 패키지(service)의 모든 메서드
-        public void serviceMethods() {}
+    ex) 
 
-        @Around("serviceMethods()")
-        public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
-             
-            long start = System.currentTimeMillis();
+    1. 두 개의 get/post 메서드에 값 전달에 대한 로그 작성
 
-            log.info("START: {} with arguments {}", joinPoint.getSignature(), joinPoint.getArgs());
+        - AOP 적용 하지 않은 코드
 
-            Object result = joinPoint.proceed(); // 실제 메서드 실행
+        @GetMapping("/get/{id}")
+        public String get(@PathVariable Long id, @RequestParam String name) {
+            System.out.println("Get Method가 실행됨!");
+            System.out.println("Get Method {id}: " + id);
+            System.out.println("Get Method {name}: " + name);
 
-            long executionTime = System.currentTimeMillis() - start;
-
-            log.info("END: {} executed in {}ms", joinPoint.getSignature(), executionTime);
-
-            return result;
+            //서비스 로직
+            
+            return id + " " + name;
         }
-    }
 
-    - 호출된 메서드: OrderService.placeOrder(String orderId)
+        @PostMapping("/post")
+        public User post(@RequestBody User user) {
+            System.out.println("Post Method가 실행됨!");
+            System.out.println("Post Method {user}: " + user);
+                
+            //서비스 로직
+                
+            return user;
+        }
+        
+        - AOP 적용한 코드
 
-    - 출력 로그
+        @Aspect
+        @Component
+        public class ParameterAop {
 
-        -START: void com.example.service.OrderService.placeOrder(String) with arguments [order123]
+            // com/example/aop/controller 패키지 하위 클래스 전부 적용
+            @Pointcut("execution(* com.example.aop.controller..*.*(..))")
+            private void cut() {}
 
-        -END: void com.example.service.OrderService.placeOrder(String) executed in 45ms
+            // cut() 메서드가 실행되는 지점 이전에 before() 메서드 실행
+            @Before
+            public void before(JoinPoint joinPoint) {
+                
+                // 실행되는 함수 이름을 가져오고 출력
+                MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+                Method method = methodSignature.getMethod();
+                System.out.println(method.getName() + "메서드 실행");
+
+                // 메서드에 들어가는 매개변수 배열을 읽어옴
+                Object[] args = joinPoint.getArgs();
+
+                // 매개변수 배열의 종류와 값을 출력
+                for (Object obj : args) {
+                    System.out.println("type : " + obj.getClass().getSimpleName());
+                    System.out.println("value : "+obj")
+                }
+            }
+
+            // cut() 메서드가 종료되는 시점에 afterReturn() 메서드 실행
+            // @AfterReturning, return 값과 after 매개변수 obj의 이름이 같아야 한다.
+            @AfterReturning(value = "cut():, returning = "obj") {
+                System.out.println("return obj");
+                System.out.println(obj);
+            }
+        }
+
+        - System.out.println 제거
+
+        @GetMapping("/get/{id}")
+        public String get(@PathVarible Long id, @RequestParam String name) {
+            // 서비스 로직
+            return id + " " + name;
+        }
+
+![aop_get_log](/grammer/img/aop_get_log.png)        
+
+        @PostMapping("/post")
+        public User post(@RequestBody User user) {
+            //서비스 로직
+            return user;
+        }
+
+![aop_post_log](/grammer/img/aop_post_log.png)
+         
 
 ### 요즘 프로젝트에서는 잘 사용하지 않는 AOP
 
