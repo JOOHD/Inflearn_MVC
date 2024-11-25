@@ -48,82 +48,84 @@
 
 ## Java
 
+### ● <a href="grammer/java/small_grammer.md">Small_grammer_zip</a>
+
+### ● <a href="grammer/java/parameter_constructor.md">Parameter_constructor</a>
+
+### ● <a href="grammer/java/container_bean.md">Spring Container/Bean</a>
+
+### ● <a href="grammer/java/setter_method.md">Setter-Method</a>
+
+### ● <a href="grammer/java/builder_pattern.md">@Builder</a>
+
+### ● <a href="grammer/java/model.md">Model(DTO/DOMAIN/VO/CommandObject)</a>
+
+### ● <a href="grammer/java/path.md">Path</a>
+
+### ● <a href="grammer/java/stream().md">Stream()</a>
+
+### ● <a href="grammer/java/Static.md">Static variable & method</a>
+
+### ● <a href="grammer/java/abstract_interface.md">abstract vs interface</a>
+
+### ● <a href="grammer/java/Lambda.md">Lambda Expression</a>
+
+### ● <a href="grammer/java/GenericType.md">GenericType</a>
+
+### ● <a href="grammer/java/JVM_stack_heap.md">JVM(Stack/Heap)</a>
+
+### ● <a href="grammer/java/builder_pattern.md">@Builder</a>
+
+### ● <a href="grammer/java/lombok_annotation.md">Lombok Annotation</a>
+
 ### AOP
 
-### ● <a href="grammer/aop/DI_IOC_AOP.md">DI & IOC & AOP</a>
-### ● <a href="grammer/aop/AOP_transaction.md">AOP Transaction</a>
-
-### ● <a href="grammer/small_grammer.md">Small_grammer_zip</a>
-
-### ● <a href="grammer/parameter_constructor.md">Parameter_constructor</a>
-
-### ● <a href="grammer/container_bean.md">Spring Container/Bean</a>
-
-### ● <a href="grammer/setter_method.md">Setter-Method</a>
-
-### ● <a href="grammer/builder_pattern.md">@Builder</a>
-
-### ● <a href="grammer/model.md">Model(DTO/DOMAIN/VO/CommandObject)</a>
-
-### ● <a href="grammer/path.md">Path</a>
-
-### ● <a href="grammer/stream().md">Stream()</a>
-
-### ● <a href="grammer/Static.md">Static variable & method</a>
-
-### ● <a href="grammer/abstract_interface.md">abstract vs interface</a>
-
-### ● <a href="grammer/Lambda.md">Lambda Expression</a>
-
-### ● <a href="grammer/GenericType.md">GenericType</a>
-
-### ● <a href="grammer/JVM_stack_heap.md">JVM(Stack/Heap)</a>
-
-### ● <a href="grammer/builder_pattern.md">@Builder</a>
-
-### ● <a href="grammer/lombok_annotation.md">Lombok Annotation</a>
+### ● <a href="grammer/java/aop/DI_IOC_AOP.md">DI & IOC & AOP</a>
+### ● <a href="grammer/java/aop/AOP_transaction.md">AOP Transaction</a>
 
 ## Spring
 
-### ● <a href="grammer/alertMessage">Controller_AlertMessage</a>
+### ● <a href="grammer/spring/alertMessage">Controller_AlertMessage</a>
 
-### ● <a href="grammer/session&cookie.md">Cookie & Session</a>
+### ● <a href="grammer/spring/session&cookie.md">Cookie & Session</a>
 
-### ● <a href="grammer/SQL_Logback.md">Logback SQL</a>
+### ● <a href="grammer/spring/SQL_Logback.md">Logback SQL</a>
 
-### ● <a href="grammer/transactionManager.md">TransactionManager</a>
+### ● <a href="grammer/spring/transactionManager.md">TransactionManager</a>
 
-### ● <a href="grammer/modelAttribute_DTO.md">@ModelAttribute vs DTO Object Transfer </a>
-### ● <a href="grammer/accessLevel.md">@NoArgsConstructor(AccessLevel.PROTECTED)</a>
+### ● <a href="grammer/spring/modelAttribute_DTO.md">@ModelAttribute vs DTO Object Transfer </a>
+### ● <a href="grammer/spring/accessLevel.md">@NoArgsConstructor(AccessLevel.PROTECTED)</a>
 
-### ● <a href="grammer/document.md">document object</a>
+### ● <a href="grammer/spring/document.md">document object</a>
 
-### ● <a href="grammer/REST API.md">REST API</a>
+### ● <a href="grammer/spring/REST API.md">REST API</a>
 
-### ● <a href="grammer/aspect.md">Aspect</a>
+### ● <a href="grammer/spring/aspect.md">Aspect</a>
 
-### ● <a href="grammer/jackson.md">Jackson</a>
+### ● <a href="grammer/spring/jackson.md">Jackson</a>
+
+### ● <a href="grammer/spring/cagtegory.md">category</a>
 
 ### Exception
 
-### ● <a href="grammer/exception.md">Exception</a>
-### ● <a href="grammer/handlerCustomException.md">HandlerCustomException</a>
+### ● <a href="grammer/spring/exeption/exception.md">Exception</a>
+### ● <a href="grammer/spring/exception/handlerCustomException.md">HandlerCustomException</a>
 
 ### Paging
 
-### ● <a href="grammer/paging/Paging_@Pageable.md">SpringBoot - paging(@PageableDefault)</a>
-### ● <a href="grammer/paging/Paging_Mybatis.md">SpringBoot - paging(MyBatis)</a>
+### ● <a href="grammer/spring/paging/Paging_@Pageable.md">SpringBoot - paging(@PageableDefault)</a>
+### ● <a href="grammer/spring/paging/Paging_Mybatis.md">SpringBoot - paging(MyBatis)</a>
 
 ### Spring Security
 
-### ● <a href="grammer/security/SpringSecurity.md">SpringSecurity</a>
-### ● <a href="grammer/security/Security_signin&up.md">Security_signin&up</a>
-### ● <a href="grammer/security/tokenProvider.md">TokenProvider</a>
-### ● <a href="grammer/security/JWT_login.md">JWT_login</a>
-### ● <a href="grammer/security/JWT_implements.md">JWT_implements</a>
+### ● <a href="grammer/spring/security/SpringSecurity.md">SpringSecurity</a>
+### ● <a href="grammer/spring/security/Security_signin&up.md">Security_signin&up</a>
+### ● <a href="grammer/spring/security/tokenProvider.md">TokenProvider</a>
+### ● <a href="grammer/spring/security/JWT_login.md">JWT_login</a>
+### ● <a href="grammer/spring/security/JWT_implements.md">JWT_implements</a>
 
 ### Amazon3
 
-### ● <a href="grammer/amazon_S3/amazonS3.md">AmazonS3</a>
-### ● <a href="grammer/amazon_S3/amazonS3_Config.md">AmazonS3_Config</a>
+### ● <a href="grammer/spring/amazon_S3/amazonS3.md">AmazonS3</a>
+### ● <a href="grammer/spring/amazon_S3/amazonS3_Config.md">AmazonS3_Config</a>
 

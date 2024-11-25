@@ -744,10 +744,141 @@
         - SecurityContext에서 Authentication 객체를 꺼내어 UserDetails의 Username을 꺼내 리턴.
         (MemberController에서 admin, user 권한의 사용자만 사용할 수 있도록 설정할 예정)
 
+    ● MemberController
 
+    @RestController
+    @RequestMapping("/api")
+    @RequiredArgsConstructor
+    public class MemberController {
 
+        private final MemberService memberService;
 
-    11/25 월
-    4. jwt 마무리.
-    5. 결제 구현 kimvampa 프젝에 적용.
-    6. 카테고리 기능 구현.
+        // 회원가입 요청
+        @PostMapping(value = "/signup")
+        public ResponseEntity<MemberDto> signup(@Valid @RequestBody MemberDto memberDto) {
+            return ResponseEntity.ok(memberService.signup(memberDto));
+        }
+
+        // 본인 정보 조회
+        @GetMapping(value = "/member", produces = MediaType.APPLICATION_JSON_VALUE)
+        @PreAuthorities("hasAnyRole('USER', 'ADMIN')")
+        public ResponseEntity<MemberDto> findMyInfoForUserAdmin() {
+            return ResponseEnity.ok(memberService.getMemberWithAuthoritiesForUser());
+        }
+
+        // username으로 회원 정보 조회
+        @GetMapping(value = "/member/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
+        @PreAuthorities("hasRole('ADMIN')")
+        @ResponseBody
+        public ResponseEntity<MemberDto> findInfoForAdmin(@PathVariable String username) {
+            return ResponseEntity.ok(memberService.getMemberWithAuthoritiesForAdmin(username));
+        }
+    }
+
+![signup_postman](/grammer/img/signup_postman.png)
+
+![login_postman](/grammer/img/login_postman.png)
+
+![authenticate_valid_postman](/grammer/img/authenticate_valid_postman.png)
+
+![authenticate_forbid_postman](/grammer/img/authenticate_forbid_postman.png)
+
+### 9. JWT 구현 - 가상 데이터를 이용한 시나리오
+
+    1. 사용자 정보
+
+       - 사용자가 로그인 정보를 입력한다.
+
+        username : "JOO"
+        password : "1234"
+        authorities : ["ROLE_USER", "ROLE_ADMIN"]
+
+    2. 로그인 과정
+
+        A. 사용자가 로그인 요청
+            - 사용자가 username, password 입력 후, 서버에 요청
+
+        POST /login
+        Body : {"username" : "JOO", "password" : "1234"}
+
+        B. 서버에서 인증 처리
+
+        1) AuthenticationManager가 username & password 검증
+           - 성공하면, Authentication 객체 생성
+            Authentication authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
+        2)  TokenProvider가 인증된 정보를 바탕으로 JWT 생성
+            - authentication.getName() -> JOO (토큰의 subject).
+            - authentication.getAuthorities() -> [ROLE_USER, ROLE_ADMIN] (claims의 auth).
+            - 유효 기간은 tokenValidityInMilliseconds에 설정된 값.
+    
+            ● JWT 생성 코드
+
+            String token = Jwts.builder()
+                .setSubject("JOO")
+                .claim("auth", "ROLE_USER, ROLE_ADMIN")
+                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1시간
+                .signWith(key, SignatureAlogrithm.HS512)
+                .compact();
+
+            ● 생성된 토크
+
+            eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huLmRvZSIsImF1dGgiOiJST0xFX1VTRVIsUk9MRV9BRE1JTiIsImV4cCI6MTYzMjQ2ODAwMH0
+            .T9CsdvR-3f9k_93nUuHdXZc9T8o
+
+        3)  서버는 클라이언트에 토큰을 반환.
+
+            Response: { "token": "eyJhbGcioi..." }
+
+    3.  인가 과정 (클라이언트 요청)
+
+        A. 클라이언트 요청
+            - 클라이언트는 JWT를 Authorization 헤더에 담아 요청
+            
+            GET /profile
+            Authorization: Bearer eyJhbGcioi...
+
+        B. 서버에서 토큰 해독
+            - TokenProvider.getAuthentication(token) 호출:
+
+            Claims claim = Jwt.parserBuilder()
+                .setSigningKey(key)   
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+            - 추출된 claims 값
+                subject : "JOO"    
+                auth : "ROLE_USER, ROLE_ADMIN"
+
+            - Claims를 기반으로 Authentication 객체 생성
+
+                User principal = new User("JOO", "", authorities);
+                Authentication auth = new UsernamePasswordAuthenticationToken(principal, token, authorities);
+
+        C. 요청 처리
+
+            - Spring Security는 생성된 Authentication 객체를 SecurityContext에 저장.
+            - 이후 해당 사용자의 권한 (ROLE_USER, ROLE_ADMIN)을 기반으로 요청을 인가.
+
+    ● 요약
+
+        1. 로그인
+            사용자 -> 서버: ID, PW 제출
+            서버 -> 사용자: JWT 발급
+
+        2. 요청
+            사용자 -> 서버: JWT 포함 요청
+            서버: 토큰 해독, 사용자 정보 확인
+            서버: 권한 검사 및 요청 처리                
+
+    ● 용어 정리
+
+        Principal : 사용자 정보 (username, ID 등)
+        Credentials : 인증 정보 (PW), 인증 후 null 처리.
+        Authorities : 권한 정보 (ROLE_USER, ROLE_ADMIN).
+        Token(JWT) : 인증 및 인가에 사용되는 토큰.
+        Claims : JWT Payload의 데이터 (subject, auth).
+        Header : 토큰 타입과 알고리즘 정보.
+        Payload : JWT의 사용자 정보와 메타데이터.
+        Signature : 토큰 위변조 방지.
