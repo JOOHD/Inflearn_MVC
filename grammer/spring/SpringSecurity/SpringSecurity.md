@@ -283,3 +283,43 @@
     PrincipalDetails : UserDetails를 구현한 사용자 정의 클래스, 사용자 Entity와 authentication 관련 정보를 담고 잇따.
 
     PrincipalDetailsService : UserDetailsService 를 구현한 사용자 정의 클래스, DB에서 사용자 정보를 조회하여 PrincipalDetails로 반환.
+
+### JwtSecurityConfig
+
+    ● 역할
+
+    - JwtSecurityConfig는 JwtFilter를 SecurityConfig에 등록하는 역할을 담당한다.
+
+        - JwtFilter 는 모든 요청에 대해 JWT를 검증해야 하므로, 이를 Spring Security 의 필터 체인에 추가해야 한다.
+
+        - JwtSecurityConfig 는 Spring Security 의 필터 체인에서 UsernamePasswordAuthenticationFilter 이전에 JwtFilter 를 추가.
+
+        - JwtSecurityConfig 는 JwtFilter 객체를 생성하고, 이 필터를 Security 설정에 적용한다.
+
+### SecurityConfig
+
+    ● 역할 
+
+    - SecurityConfig 는 Spring Security 의 전반적인 보안 설정을 정의하는 클래스이다.
+
+    1. CORS, CSRF, Session 정책 설정
+
+        - http.csrf().disable() : CSRF 비활성화
+        - http.cors() : CORS 설정
+        - http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) : 세션 사용 대신 JWT로 인증 관리
+
+    2. 권한 및 인증 정책 설정
+
+        - 각 요청 경로에 대해 인증/인가 규칙 정의 (.antMatchers()).
+            ex)
+                특정 API는 ROLE_USER 만 접근 가능, 다른 API는 ROLE_ADMIN 만 접근.
+
+    3. 예외 처리 헨들러 등록
+
+        - 인증 실패와 권한 거부 상황에 대해, 커스텀 헨들러 (JwtAuthenticationEntryPoint, JwtAccessDeniedHandler)를 등록
+
+    4.  JWT 필터 추가
+
+        - SecurityConfig 에서 JwtSecurityConfig 를 적용하여 JwtFilter 를 필터 체인에 연결
+            ex)
+                .apply(new JwtSecurityConfig(tokenProvider));
