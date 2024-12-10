@@ -56,7 +56,11 @@
 
 ### ● <a href="grammer/java/setter_method.md">Setter-Method</a>
 
-### ● <a href="grammer/java/builder_pattern.md">@Builder</a>
+### ● <a href="grammer/java/builder.md">@Builder</a>
+
+### ● <a href="grammer/java/builder_pattern.md">Builder pattern</a>
+
+### ● <a href="grammer/java/compact_builder.md">compact() vs builder()</a>
 
 ### ● <a href="grammer/java/model.md">Model(DTO/DOMAIN/VO/CommandObject)</a>
 
@@ -73,8 +77,6 @@
 ### ● <a href="grammer/java/GenericType.md">GenericType</a>
 
 ### ● <a href="grammer/java/JVM_stack_heap.md">JVM(Stack/Heap)</a>
-
-### ● <a href="grammer/java/builder_pattern.md">@Builder</a>
 
 ### ● <a href="grammer/java/lombok_annotation.md">Lombok Annotation</a>
 
