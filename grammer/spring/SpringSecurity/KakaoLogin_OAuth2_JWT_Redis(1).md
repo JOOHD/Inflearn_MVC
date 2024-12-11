@@ -4,6 +4,29 @@
 
     Spring Security + JWT + OAuth2 Client + Redis 를 사용하여 카카오 로그인을 프로젝트에 적용.
 
+### OAuth2 
+
+    - 인증 및 권한 위임을 위한 표준 프로토콜
+    - 애플리케이션이 제3자 서비스(카카오, 구글, 네이버..)를 통해 사용자 리소스(프로필, 이메일등)에 접근하도록 허용.
+    - OAuth2 에서는 AccessToken 을 발급받아 사용자의 데이터를 안전하게 요청.
+
+### Spring Security 의 OAuth2User
+
+    - Spring Security 에서 제공하는 interface, OAuth2 인증을 통해 가져온 사용자 정보를 표현
+
+    ● 주요 메서드
+
+    - getName() : 인증 주체 이름.
+    - getAttributes() : 인증 제공자(카카오, 구글..)로부터 전달받은 사용자 정보(속성).
+    - getAuthorities() : 사용자 권한 정보.
+
+    ● OAuth2 사용자의 기본 흐름.
+
+    1. 사용자가 카카오 로그인 페이지에서 인증을 완료.
+    2. 카카오의 인증 서버가 AccessToken 을 반환
+    3. 애플리케이션이 해당 AccessToken 으로 사용자 정보를 요청
+    4. 사용자 정보를 Spring Security 의 OAuth2User 객체로 받아 처리.
+    
 ### step1. 인가 코드 받기
 
 ![kakao_authority](/grammer/img/kakao_authority.png)
@@ -229,6 +252,114 @@
     
     - gradle 에 추가한 OAuth2 Client 가 제공하는 OAuth2User interface 의 구현체로 작성해야 Authentication 객체 안에 담을 수 있기 때문에 OAuth2User 를 구현하여 getter 를 오버라이딩 하였다.
 
+### KakaoUserInfo
+
+    ● 개념
+    
+    - 카카오로부터 받은 사용자 정보를 다루기 위한 커스텀 클래스.
+    - Spring Security 의 OAuth2User.getAttributes() 에서 반환된 맵 데이터를 더 편리하게 사용할 수 있도록 캡슐화.
+
+    1. 주요 속성
+
+    카카오 로그인에서 받을 수 있는 사용자 정보
+
+    - id, kakaoo_account, email, profile, nickname, profile_image_url
+
+    2. kakaoUserInfo class
+
+    @RequiredArgsConstructors
+    public class KakaoUserInfo {
+
+        private final Map<String, Onject> attributes;
+
+        public String getId() {
+            return attributes.get("id").toString();
+        }
+
+        public String getEmail() {
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            return kakaoAccount != null ? kakaoAccount.get("email").toString() : null;
+        }
+
+        public String getNickname() {
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            if (kakaoAccount != null) {
+                Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+                return profile != null ? profile.get("nickname").toString() : null;
+            }
+        return null;
+        }
+    }
+
+    3. 클래스 등록 및 설정 방법
+
+    - 카카오 개발자 콘솔에 애플리케이션 등록.
+    - Redirect URI 등록:
+        ex) http://localhost:8080/login/oauth2/code/kakao
+    - REST API Key 와 Client Secret Key 복사.
+
+    4. Spring Security (application.yml)
+
+        spring:
+            security:
+                oauth2:
+                client:
+                    registration:
+                    kakao:
+                        client-id: "YOUR_REST_API_KEY"
+                        client-secret: "YOUR_CLIENT_SECRET"
+                        scope:
+                        - profile_nickname
+                        - account_email
+                        redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
+                        client-name: "Kakao"
+                    provider:
+                    kakao:
+                        authorization-uri: https://kauth.kakao.com/oauth/authorize
+                        token-uri: https://kauth.kakao.com/oauth/token
+                        user-info-uri: https://kapi.kakao.com/v2/user/me
+                        user-name-attribute: id
+
+    5. Security Config 
+
+    @EnableWebSecurity
+    public class SecurityConfig {
+
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+            hhtp 
+                .csrf().disable()
+                .authorizeRequests()
+                    .antMatchers("/login/**", "/oauth2/**).permitAll()
+                    .anyRequest().authenticated()
+                .and()
+                .oauth2Login()
+                    .userInfoEndpoint()
+                    .userService(oAuth2UserService());
+            return http.build();
+        }
+
+        @Bean
+        public DefaultOAuth2UserService oAuth2UserService()
+        {
+            return new DefaultOAuth2UserService() {
+                @Override
+                public OAuth2User loadUser(OAuth2UserRequest userRequest) {
+                    OAuth2User oAuth2User = super.loadUser(userRequest);
+                    return oAuth2User; // 커스텀 로직 추가 가능.
+                }
+            }
+        }
+    }
+
+    6. 동작 흐름
+
+    - OAuth2 인증 : 카카오 서버로 redirect -> 인증 후 AccessToken 발급
+    - 사용자 정보 요청 : DefaultOAuth2UserService 가 OAuth2User 객체를 바환.
+    - 사용자 정보 매핑 : OAuth2User.getAttributes() 를 사용해 카카오 정보를 추출.
+    - KakaoUserInfo 활용 : kakaoUserInfo 객체를 통해 필요한 사용자 정보를 쉽게 접근.
+
 ### KakaoUserInfo - 로그인 성공 시, kakaoMemberDetails 로 캐스팅 위한 정보
 
     public class KakaoUserInfo {
@@ -403,196 +534,4 @@
     5. 사용자 정보 반환
         - kakaoMemberDetails 객체를 생성하여 사용자 이메일, 권한, 속성을 반환한다. 이 객체는 스프링 시큐리티의 인증 시스템에서 사용된다.
 
-
-## Kakao OAuth2 + JWT + Redis를 통한 인증 과정 구현 (2) - JWT 적용
-
-    최초 로그인의 경우 DB에 회원을 저장하고, Details 객체를 만들어 Authentication 객체에 담고, SecurityContext 에 Authentication 객체를 보관하도록 설정하였고,
-
-    최초 로그인이 아닌 경우에는 DB에서 회원을 가져와 Details 객체를 만들어 Authentication 객체에 담고, SecurityContext 에 Authentication 객체를 보관하도록 설정하였다.
-
-    - 이번 목적은 JWT를 어떻게 적용했는지를 중점으로 보자.
-
-### 0. application.yml 설정     
-
-    jwt: 
-        secret_key : ${jwt.secret_key}
-        access-token-validity-in-seconds : 30000 (배포 시, 30분 -> 1800 설정)
-        refresh-token-validity-in-seconds : 86400 (배포 시, 1일 -> 86400 설정) 
-
-    시그니처에 사용할 secret_key & accessToken expired & refreshToken expired 을 yml에 지정해준다. 
-
-    secret_key 값은 중요한 정보이니만큼 github 로 형성관리하지 않고, 별도로 다른 파일에 설정해주고 해당 파일은 gitignore 에 등록해준다.
-
-    ● build.gradle 에 의존성 추가
-
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-
-### 1. TokenProvider - 사용자 정보로 JWT 토큰 생성  
-
-    public class TokenProvider {
-
-        private static final String AUTH_KEY = "AUTHORITY";
-        private static final String AUTH_EMAIL = "EMAIL";
-
-        private final String secretKey;
-        private final long accessTokenValidityMilliSeconds;
-        private finla long refreshTokenValidityMilliSeconds;
-
-        private Key secretKey;
-
-        public TokenProvider(@Value("${jwt.secret_key"}) String secretKey,           
-                             @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValiditySeconds,
-                             @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValiditySeconds) {
-            
-            this.secretKey = secretKey;
-            this.accessTokenValidityMilliSeconds = accessTokenValiditySeconds * 1000;
-            this.refreshTokenValidityMilliSeconds = refreshTokenValiditySeconds * 1000;
-        }
-    
-        @PostConstruct
-        public void initKey() {
-            byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-            this.secretkey = Keys.hmacShaKeyFor(keyBytes);
-        }
-    }
-
-    각 토큰에 대한 만료시간과 secretKey 같은 yml 설정 정보를 토대로 생성자 주입하고, 생성자 주입 후 JWT 생성에 사용될 Key는 initKey() 메소드로 secretKey 를 decode 하여 Key에 주입했다.
-
-    // access, refresh Token 생성
-    public TokenDto createToken(String email, String role) {
-
-        long now = (new Date()).getTime();
-
-        Date accessValidity = new Date(now + this.accessTokenValidityMilliSeconds);
-        Date refreshValidity = new Date(now + this.refreshTokenValidityMilliSeconds);
-
-        String accessToken = Jwts.builder()
-                .addClaims(Map.of(AUTH_EMAIL, email))
-                .addClaims(Map.of(AUTH_KEY, role))
-                .signWith(secretkey, SignatureAlgorithm.HS256)
-                .setExpiration(accessValidity)
-                .compact();
- 
-        String refreshToken = Jwts.builder()
-                .addClaims(Map.of(AUTH_EMAIL, email))
-                .addClaims(Map.of(AUTH_KEY, role))
-                .signWith(secretkey, SignatureAlgorithm.HS256)
-                .setExpiration(refreshValidity)
-                .compact();
- 
-        return TokenDto.of(accessToken, refreshToken);
-    }
-
-    // token 이 유요한 지 검사
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token);
-            return true;        
-        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
-            return false;
-        } catch (UnspportedJwtException e) {
-            return false;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    // token 이 만료되었는지 검사
-    public boolean validateExpire(String token) {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token)
-        }
-    }
-
-    // token으로부터 Authentication 객체를 만들어 리턴하는 메소드
-    public Authentication getAuthentication(String token) {
-
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJwts(token)
-                .getBody();
-
-        List<String> authorities = Arrays.asList(claims.get(AUTH_KEY)
-                .toString()
-                .split(","));
- 
-        List<? extends GrantedAuthority> simpleGrantedAuthorities = authorities.stream()
-                .map(auth -> new SimpleGrantedAuthority(auth))
-                .collect(Collectors.toList());
- 
-        KakaoMemberDetails principal = new KakaoMemberDetails(
-                (String) claims.get(AUTH_EMAIL),
-                simpleGrantedAuthorities, Map.of());
- 
-        return new UsernamePasswordAuthenticationToken(principal, token, simpleGrantedAuthorities);
-    }        
-
-    TokenProvider 에서 토큰 생성 뿐만 아니라 토큰 검증 관련 메소드와 토큰으로부터 Authentication 객체를 리턴하는 기능들을 추가 구현했다.
-
-### 2. OAuth2SuccessHandler
-
-    @Component
-    @RequiredArgsConstructor
-    public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler
-    {
-        private static final String REDIRECT_URI = "http://localhost:8080/api/sign/login/kakao?accessToken=%s&refreshToken=%s";
-
-        private final TokenProvider tokenProvider;
-        private final MemberRepository memberRepository;
-
-        @Transactional
-        @Override
-        public void onAuthenticatoinSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException 
-        {
-            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-            KakaoUserInfo kakaoUserInfo = new KakaoUserInfo(oAuth2User.getAttributes());
-
-            Member member = memberRepsitory.findByEmail(kakaoUserInfo.getEmail()).orElseThrow(MemberNotFoundException::new);
-
-            TokenDto tokenDto = tokenProvider.createToken(member.getEmail(), member.getRole().name());
-
-            String redirectURI = String.format(REDIRECT_URI, tokenDto.getAccessToken(), tokenDto.getRefreshToken());
-
-            getRedirectStrategy().sendRedirect(request, response, redirectURI);
-        }
-    }
-
-    SimpleUrlAuthenticationSuccessHandler 를 상속하여 onAuthenticationSuccess() 메소드를 오버라이딩하면 Authentication 객체를 추가적으로 처리할 수 있다.
-
-    후처리 서비스인 KakaoMemberDetailsService 에서 Security Context 에 Authentication 객체를 저장한 덕분에 이로부터 사용자 정보를 꺼내와 token 정보를 생성하고 이 토큰 정보를 파라미터에 담아 redirect URI 로 보내 처리한다.
-
-    이렇게 등록한 Handler 는 SecurityConfig 에 추가적으로 등록하면 된다.
-
-    ● SecurityConfig 등록
-
-    .oauth2Login(oAuth2Login -> {
-        oAuth2Login.userInfoEndPoint(userInfoEndpointConfig ->
-                    userInfoEndpointConfig.userService(kakaoMemberDetailsService)); // 1
-        oAuth2Login.successHandler(oAuth2SuccessHandler); // 2
-    });
-    - 카카오 로그인에 성공한 경우 1번이 먼저 실행되고, 그 후 2번이 실행
-
-    위 onAuthenticationSuccess() 메소드에서 redirect 된 URI는 아래 컨트롤러에 매핑되어 Json으로 클라이언트에게 넘겨준다.
-
-    @RestController
-    @RequiredArgsConstructor
-    @RequestMapping("/api/sign")
-    public class SignController {
-
-        @GetMapping("/login/kakao")
-        public ResponseEntity loginKakao(
-            @RequestParam(name = "accessToken") String accessToken,
-            @RequestParam(name = "refreshToken") String refreshToken) {
-                return new ResponseEntity(TokenDto.of(accessToken, refreshToken), HttpStatus.OK);
-            }
-    }
 
