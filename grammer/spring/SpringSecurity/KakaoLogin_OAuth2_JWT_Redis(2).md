@@ -293,6 +293,27 @@
             throw new AuthenticationEntryPointException();
         }
     }
+
+    목적  
+        -특정 예외 발생 시, 직접 호출 가능한 API endPoint 제공
+
+    상황 
+        - 클라이언트가 명시적으로 예외와 관련된 특정 URI를 호출하도록 설계
+        - 예외 처리가 서버 내부의 redirect 로직에 의존하는 경우 
+
+        ex)
+            JwtAuthenticationFailEntryPoint & JwtAccessDeniedHandler 에서 redirect 할 endpoint
+
+    구성 
+        - /api/exception/access-denied & /api/exception/entry-point 와 같은 API URI 를 정의
+        - 각각 AccessDeniedException & AuthenticationEntryPointException 을 직접 던지는 역할.     
+
+    - 요청이 특정 URI로 리다이렉트되면, 해당 엔드포인트를 통해 예외를 발생시킴.
+
+        ex)
+            권한 부족: /api/exception/access-denied
+            인증 실패: /api/exception/entry-point
+
     
     이 API에 대한 접근 또한 Jwt필터에서 추가적으로 isRequestPassURI에 등록!
 
@@ -312,6 +333,27 @@
         }
     }
 
+    목적 
+        - global exception (AOP) 를 제공하여, 전체 애플리케이션에서 발생하는 예외를 통합적으로 처리.
+
+    상황 
+        - API endpoint 나 로직에서 발생하는 예외를 자동으로 처리.
+        - 특정 컨트롤러를 호출하지 않아도 발생한 예외를 잡아서 일관된 응답을 반환.
+
+        ex)
+            AccessDeniedException 또는 AuthenticationEntryPointException이 발생했을 때 모든 요청에 대해 공통된 처리를 함.    
+
+    구성
+        - @RestControllerAdvice 를 사용해 전역 예외 헨들러를 구현
+        - 예외 클래스별로 @ExceptionHandler 등록        
+
+    - 특정 예외가 발생하면, 해당 예외에 매핑된 헨들러 메서드가 호출되어 적절한 응답 반환.    
+
+        ex)
+            권한 부족: AccessDeniedException -> "접근 불가능한 권한입니다."
+            인증 실패: AuthenticationEntryPointException -> "로그인이 필요한 요청입니다."
+
+
 ### SecurityConfig에 해당 헨들러 등록
 
     .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)    
@@ -320,3 +362,46 @@
         exceptionHandling.authenticationEntryPoint(jwtAuthenticationFailEntryPoint);
         exceptionHandling.accessDeniedHandler(jwtAccessDeniedHandler);
     });
+
+    ● 왜 두 군데에 등록하는가?
+
+    1. 역할 분리
+
+        - ExceptionController : 예외를 발생시키는 API 역할.
+          - 예외 상황을 명시적으로 URI로 나타냄
+          - 다른 클래스와 연계하여 예외 발생 uri로 redirect
+
+        - ExceptionAdvisor : 전역 예외 처리.
+          - 예외가 발생했을 때, 자동으로 잡아 응답 반환
+          - API 호출 외의 모든 예외 상황을 처리
+
+    2. Redirect 와 응답 처리의 분리
+    
+        - 리다이렉트가 발생한 뒤에도 예외를 처리하기 위해서는 ExceptionAdvisor 가 필요.
+        - 리다이렉트된 엔드포인트(/api/exception/*)에서 예외가 발생하면, 이를 잡아 적절한 메시지와 상태 코드로 응답해야 함.
+
+### 흐름 
+    
+    if (tokenProvider.validate(accessToken) && tokenProvider.validateExpire(accessToken)) {}
+    filterChain.doFilter(request, response);
+
+    - SecurityContextHolder 에 인증 정보를 설정하고 다음 필터로 요청을 전달.
+    - 유효하지 않은 JWT : 필터 체인에서 SecurityContext 에 인증 정보가 없으면, 이후 필터가 예외를 처리.
+
+    1. request -> authentication/authority fail(예외 발생) -> JwtFilter(JwtAuthenticationFailEntryPoint & JwtAccessDeniedHandler) 호출.
+
+    2. Redirect -> ExceptionController 호출 -> 예외 발생.
+    
+    3. ExceptionAdvisor -> 발생한 예외 처리, 
+        예외 잡아 응답 반환 return new ResponseEntity("message", HttpStatus.UNAUTHORIZED);
+
+    결론
+
+    - ExceptionController 는 특정 상황에서 호출 가능한 명시적 API를 제공하기 위한 클래스.
+    
+    - ExceptionAdvisor 는 전역적으로 예외를 처리하여 일관된 응답을 반환하기 위한 클래스
+
+    - 두 클래스는 서로 보완 관계로 설계되어, 리다이렉트와 전역 예외 처리를 명확히 분리.
+
+
+
