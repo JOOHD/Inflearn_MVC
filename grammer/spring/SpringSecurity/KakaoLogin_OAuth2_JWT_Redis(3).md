@@ -203,46 +203,32 @@
             return;
         }
 
-        // 액세스 토큰 가져오기
+        // 토큰 가져오기
         String accessToken = getTokenFromHeader(request, ACCESS_HEADER);
+        String refreshToken = getTokenFromHeader(request, REFRESH_HEADER);
 
-        // 1. 액세스 토큰 유효 && 리프레시 토큰 유효 (기존 코드 처리)
+        // 1. 액세스 토큰 유효 && 리프레시 토큰 유효
         if (validateExpire(accessToken) && validate(accessToken)) {
+
             SecurityContextHolder.getContext()
                     .setAuthentication(tokenProvider.getAuthentication(accessToken));
         }
 
-        // 2. 액세스 토큰 만료 && 리프레시 토큰 유효 (기존 코드 처리)
+        // 2. 액세스 토큰 만료 && 리프레시 토큰 유효
         else if (!validateExpire(accessToken) && validate(accessToken)) {
+
             String refreshToken = getTokenFromHeader(request, REFRESH_HEADER);
 
             if (validate(refreshToken) && validateExpire(refreshToken)) {
-                // 액세스 토큰 및 리프레시 토큰 재발급
                 TokenDto tokenDto = tokenProvider.reIssueAccessToken(refreshToken);
-
-                // 새로 발급한 액세스 토큰으로 인증정보 설정
                 SecurityContextHolder.getContext()
                         .setAuthentication(tokenProvider.getAuthentication(tokenDto.getAccessToken()));
-
-                // 토큰 재발급 URI로 리다이렉트
                 redirectReissueURI(request, response, tokenDto);
-                return; // 이후 처리를 중단하고 리다이렉트
-            }
-        }
-
-        // 3. 액세스 토큰 유효 && 리프레시 토큰 만료 (새로운 처리 로직)
-        else if (validateExpire(accessToken) && validate(accessToken)) {
-            String refreshToken = getTokenFromHeader(request, REFRESH_HEADER);
-
-            if (!validateExpire(refreshToken) || !validate(refreshToken)) {
-                // 리프레시 토큰이 만료되었음을 로깅하거나 클라이언트에 알림
-                log.warn("Refresh token is expired or invalid.");
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token is expired. Please login again.");
                 return;
             }
         }
 
-        // 4. 액세스 토큰 만료 && 리프레시 토큰 만료 (새로운 처리 로직)
+        // 4. 액세스 토큰 만료 && 리프레시 토큰 만료
         else {
             log.warn("Both access token and refresh token are expired or invalid.");
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required. Both tokens are invalid.");
@@ -257,3 +243,57 @@
     validateExpire: 토큰의 만료 시점(exp)이 유효한지 검사.
     getTokenFromHeader: HTTP 헤더에서 토큰 값을 추출.
     redirectReissueURI: 새로 발급된 토큰 정보를 포함해 클라이언트를 특정 URI로 리다이렉트.
+
+###  KakaoLogin 최종 흐름 요약
+
+    1. 사용자가 kakaoLogin 버튼 클릭 시,
+
+        - 클라이언트는 카카오 인증 서버로 redirect
+        - kakao OAuth2 인증 서버
+        - 카카오 서버로 직접 이동
+
+    2. 카카오 인증 완료 후, redirect callback
+
+        - 카카오 인증 서버가 클라이언트로 Authentication Code 를 전달.
+        - 클라이언트는 Authentication Code 를 서버의 kakaoLoginController 로 전송.
+        - 카카오 서버 -> 클라이언트 -> 백엔드
+
+    3. AccessToken 발급 및 사용자 정보 요청
+
+        - 백엔드가 Authorization Code 를 사용해 카카오 서버에서 AccessToken 요청.
+        - 카카오 서버가 AccessToken 과 사용자 정보(kakaoUserInfo) 반환.
+        - 백엔드 -> kakao OAuth2 서버
+        - kakaoOAuth2Service.getKakaoUserInfo(accessToken)/
+
+    4. JWT token 생성.
+
+        - 백엔드에서 사용자의 카카오 정보를 기반으로 JWT AccessToken & RefreshToken 을 생성
+        - RefreshToken 은 Redis 에 저장, AccessToken 은 클라이언트로 응답.
+        - userInfo -> JWT 생성 -> RefreshToken 저장 (Redis).
+        - JWT AccessToken -> 클라이언트
+        - kakaoTokenProvider.createToken(userInfo)
+        - RedisTemplate.save(refreshToken)
+
+    5. 클라이언트 요청에 JWT 토큰 사용
+
+       - 클라이언트는 이후 요청에 JWT AccessToken 을 Authorization Header 에 포함.
+       - 백엔드의 JwtFilter 가 AccessToken 을 검증하고, 필요 시, RefreshToken 을 통해 토큰 재발급
+       - 클라이언트 -> 벡엔드 -> Redis(RefreshToken 확인)        
+       - JwtFilter.doFilterInternal(requet, response, filterChain)
+       - tokenProvider.validate(token) & validateExpire(token)
+
+    6. Redis 만료 및 갱신 처리
+
+        - RefreshToken 의 만료 기간이 Redis 에서 관리
+        - 만료된 RefreshToken 이 확인되면, 클라이언트에게 재로그인 요청.
+        - 백엔드 -> Redis -> 클라이언트
+        - RedisTemplate.delete(refreshToken) (만료 시)      
+        - TokenProvider.reIssueAccessToken(refreshToken) (재발급 시)
+
+    Final
+
+    1. 사용자 클릭 -> 카카오 서버로 이동
+    2. 인증 완료 후 -> 서버에서 Authorization Code 처리.
+    3. AccessToken & 사용자 정보 -> 카카오에서 응답.
+    4. JWT 생성 -> AccessToken(클라이언트) & RefreshToken(Redis)    
+    5. 이후 요청 -> JWT 검증 (AccessToken), 필요 시 재발급 (RefreshToken)
