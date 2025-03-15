@@ -499,8 +499,8 @@
         private void setTokenRefreshFilter(HttpSecurity httpSecurity) {
 
             // RT 처리 필터 생성
-            SimpleAuthenticationProcessingFilter tokenRefreshAuthenticationFilter = new SimpleAuthenticationProcessingFilter(RequestMatchers.REFRESH_TOKEN, // RT 요청 매칭 엔드포인트 정의
-            
+            SimpleAuthenticationProcessingFilter tokenRefreshAuthenticationFilter = new SimpleAuthenticationProcessingFilter(RequestMatchers.REFRESH_TOKEN, // RT 요청 매칭 엔드포인트 정의            
+
             new BearerAuthenticationConverter()); // 요청에서 Bearer Token 추출, RT 검증에 사용할 값 제공.
 
             // RT 검증을 위한 Authentication Manager 설정
@@ -520,8 +520,6 @@
         }
     }
 
-    ● JWT & RT 사용의 전체 흐름
-
     이전 글의 로그인 인증 설정 부분과 동일하게 SimpleAuthenticationProcessFilter를 생성한다.
 
       - 왜? 위에서 Access Token 재발급 과정을 보면 인증이 성공된 후, 토큰을 발급한 뒤 클라이언트에게 다시 응답을 한다.
@@ -531,3 +529,106 @@
     AuthenticationSuccessHandler에서 새로운 Access Token을 발급한 뒤, 클라이언트에게 넘겨주면 끝이다.
 
     따라서 AuthenticationFilter 객체가 아닌, SimpleAuthenticationProcessFilter를 생성하여 설정한다.
+
+    ● JWT & RT 사용의 전체 흐름
+
+        1. AT 발급 및 사용
+            - 클라이언트가 로그인하면 AT/RT 가 발급이 된다.
+            - AT는 클라이언트가 보호된 리소스에 접근할 때 사용된다.
+
+        2. AT 만료
+            - AT가 만료되면 클라이언트는 더 이상 보호된 리소스에 접근할 수 없다.
+            - 클라이언트는 /refresh 엔트포인트로 RT을 전송해 새로운 AT를 요청.
+
+        3. RT 검증 및 재발급
+            - 서버는 클라이언트가 전송한 RT을 RefreshTokenProvider 를 통해 검증.
+            - RT가 유효하면 새로운 AT를 발급하고 클라이언트에 반환.
+
+        4. RT 관리
+            - 서버는 RT를 Redis와 같은 저장소에 저장하고, 만료 시 삭제한다.     
+
+    ● 재발급 시점
+
+        - AT가 만료된 경우
+            - 클라이언트는 보호된 리소스 요청 시, 401 Unauthorized 응답을 받는다.
+            - 클라이언트는 RT를 사용하여 새로운 AT를 요청한다.
+
+        - RT가 만료된 경우
+            - 클라이언트는 다시 로그인을 해야 된다.               
+
+    ● RefreshTokenProvider
+
+    AT와 다르게 인증 로직이 다르기 때문에 TokenProvider 추상 클래스를 상속 구현한 RT를 사용한다.
+
+    간단하게 RefreshTokenProvider 의 인증 역할 수행 부분을 보면 다음과 같다.
+    BearerAuthenticationConverter 가 요청 헤더에서 RT을 꺼내어 Authentication interface 구현체인 BearerAuthenticationToken 을 반환하면서 인증 프로세스가 시작된다.
+
+    AuthenticationManage 는 AuthenticationProvider List 를 순회하면서 support 가 ture 인 AuthenticationProvider 의 authenticate 를 호출.
+
+    따라서 Authentication BearerAuthenticationToken 타입이라면 RefreshTokenProvider 의 authenticate 가 호출되면서 인증이 진행된다.
+
+    1. 토큰이 유효한지 검증한다.
+        - TokenProvider 의 verify 를 통해 RT가 유효한지 JWT인지 검증한다.
+
+    2. RT인지 검증한다. (check token type)
+        - JWT 가 RT인지 확인한다.
+
+    위 두 검증이 성공하면, 유저 정보를 저장소에서 가져온 뒤, 인증된 Authentication(AccessUser) 객체를 만들어 응답한다.
+    TokenRefreshSuccessHandle 를 통해 Authentication(AccessUser)로 새로운 AT를 생성한 뒤 클라이언트에게 응답한다.
+
+### RefreshTokenProvider
+
+    @Component(value = "refreshTokenProvider")
+    @RequiredArgsConstructor
+    public class RefreshTokenProvider extends TokenProvider {
+
+        private static final String TOKEN_SUBJECT = "refresh token";
+
+        private final RefreshTokenRepository refreshTokenRepository;
+
+        private final UserDetailsService userDetailsService;
+
+        @Override
+        public Authentication authentication(Authentication authentication) throws AuthenticationException {
+
+            Claims claims = super.verify(authentication.getName());
+            checkTokenType(claims);
+
+            String email = claims.get("email", String.class);
+            AuthUserDetails authUserDetails = (AuthUserDetails)userDetailsService.loadUserByUsername(email);
+
+            // RT의 email(payload)로 저장소 존재 여부 && 요청 RT와 match
+
+            boolean empty = refreshTokenRepository.findByEmail(email)
+                        .filter(token -> Objects.equals(token, authentication.getName()))
+                        .stream()
+                        .findAny()
+                        .isEmpty();
+
+            if (empty) {
+                throw new BadCredentialsException("인증 정보를 확인하세요.");
+            }
+
+            return AccessUser.authenticated(authUserDetails);
+        }
+
+        @Override
+        public boolean supports(Class<?> authentication) {
+            return (BearerAuthenticationToken.class.isAssignableFrom(authentication));
+        }
+
+        public BearerAuthenticationToken createToken(String email) {
+            long tokenLive = 1000L * 60L * 60L; // 1h
+            BearerAuthenticationToken token = super.createToken(TOKEN_SUBJECT, Map.of("email", email), tokenLive);
+            refreshTokenRepository.save(email, tooken.getName(), tokenList);
+
+            return token;
+        }
+
+        @Override
+        public void checkTokenType(Claims claims) {
+            if (!TOKEN_SUBJECT.equals(claims.getSubject())) {
+                throw new BadCredentialsException("인증 정보를 확인하세요.");
+            }
+        }
+    }
