@@ -137,3 +137,6 @@
 ### ● <a href="grammer/querydsl/N+1_fetchJoin.md">N + 1, problem & resolve</a>
 ### ● <a href="grammer/querydsl/QueryHelper.md">QueryHelper class</a>
 
+## JPQL
+
+### ● <a href="grammer/JPQL/JPQL.md">JPQL</a>
