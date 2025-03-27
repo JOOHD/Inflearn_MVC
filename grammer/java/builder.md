@@ -423,8 +423,38 @@
 
 ### static class (정적 내부 클래스)
 
+    ● 개념
+
     정적 내부 클래스라는 심플 빌더 패턴 방법 중 하나이다.
     생성자가 많을 경우, 변경 불가능한 불변 객체가 필요한 경우 코드의 가독성과 일관성, 불변성을 유지하는 것에 중점을 둔다.(우리가 사용하는 빌더 패턴과 차이는 거의 없다.) 다만 다른 점은 빌더 클래스가 구현할 클래스의 내부에 static class를 구현한다는 점이다. 
+
+    ● 사용 이유
+
+    빌더 패턴을 가능하게 만들고, 객체 생성을 더 유연하고 안전하게 만들기 위함.
+
+        ● 일반적인 생성자 방식 문제점
+        public InquiryDto(Long inquiryId, Long memberId, String inquiryTile) {
+            this.inquiryId = inquiryId;
+            this.memberId = memberId;
+            this.inquiryTitle = inquiryTitle;
+        }
+
+        위와 같은 방식으로 객체를 생성하면, setter 를 사용해 객체 상태를 변경할 가능성이 있다.
+
+            InquiryDto dto = new InquiryDto(1L, 2L, "상품문의");
+            dto.setInquiryTitle("변경된 문의 제목"); // 필드 변경 가능 -> 불변성 깨짐
+
+            -> 이 문제를 해결하기 위해, 빌더 패턴을 활용하면 setter 없이 필드 변경을 방지
+
+            -> 빌더를 사용하면 setter 없이 객체가 생성된 이후 필드 변경이 불가능 
+
+            ● 빌더 패턴 적용    
+            InquiryDto dto = InquiryDto.builder()
+                .inquiryId(1L)
+                .memberId(2L)
+                .inquiryTitle("상품 문의")
+                .build();   
+            // dto.setInquiryTitle(변경된 제목"); // 불가능 -> 불변성 유지
 
     ex)
         class Person {
@@ -602,3 +632,7 @@
         this.name=builder.name;
         this.address=builder.address;
     }
+
+### 빌더 패턴의 단점? (내 생각 기준)    
+
+    

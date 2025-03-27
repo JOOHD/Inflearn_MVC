@@ -98,4 +98,9 @@
         - @Builder 도 생성자를 기반으로 빌더 메서드를 만드는데, @AllArgsConstructor 가 있으면 생성자와 빌더 생성 규칙이 충돌할 수 있다.
         - 그래서 @AllArgsConstructor 를 사용하면 빌더가 정상적으로 동작하지 않을 가능성이 높다.
 
-    해결 방법 -> @AllArgsConstructor 를 제거하고, 대신 생성자에 @Builder 를 적용하는 것이 일반적이다.         
+    해결 방법 -> @AllArgsConstructor 를 제거하고, 대신 생성자에 @Builder 를 적용하는 것이 일반적이다.       
+
+    ● 단점 
+
+    - 생성자의 파라미터 순서를 반드시 맞춰야 한다.
+    - 필드가 많아질수록 실수할 가능성이 높다  
