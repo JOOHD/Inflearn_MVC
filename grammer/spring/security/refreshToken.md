@@ -1,5 +1,25 @@
 ## 본문
 
+### refershToken 흐름 정리
+
+| 순서 | 위치 / 클래스                     | 설명                                                                 |
+|------|-----------------------------------|----------------------------------------------------------------------|
+| 1    | 프론트엔드                        | 이메일+비밀번호로 로그인 요청 (`POST /auth/login`)                  |
+| 2    | `AuthController.login()`          | 로그인 요청을 `MemberService.memberLogin()`에 위임                  |
+| 3    | `MemberService.memberLogin()`     | 이메일로 회원 조회 → 비밀번호 검증 → 성공 시 `Member` 반환         |
+| 4    | `JWTUtil.createJwt()`             | accessToken, refreshToken 생성                                      |
+| 5    | `CookieUtil.createHttpOnlyCookie()` | refreshToken을 HttpOnly 쿠키에 담음                              |
+| 6    | `ResponseEntity`                  | accessToken은 응답 헤더에, refreshToken은 쿠키로 응답               |
+| 7    | 프론트엔드                        | accessToken은 localStorage, refreshToken은 자동 쿠키 저장           |
+| 8    | accessToken 만료 후 요청 발생     | 프론트 요청에 refreshToken 쿠키 자동 포함                           |
+| 9    | `JWTFilterV3.doFilterInternal()`  | accessToken 만료 확인 후 refreshToken 추출 시도                     |
+| 10   | `CookieUtil.extractRefreshTokenFromCookie()` | 쿠키에서 refreshToken 추출                            |
+| 11   | `JWTUtil.isTokenValid()`          | refreshToken 유효성 검사                                             |
+| 12   | `JWTUtil.extractEmail()`          | refreshToken에서 이메일 추출                                         |
+| 13   | `JWTUtil.reissueAccessToken()`    | 새 accessToken 발급                                                  |
+| 14   | `JWTFilterV3`                     | 새 accessToken을 응답 헤더에 실어 클라이언트로 전달                |
+| 15   | 프론트엔드                        | 새 accessToken 저장 → 요청 재시도 가능
+
 ### 설정
 
     JWT는 한 번 발급하면 만료되기 전까지 삭제할 수 없다.

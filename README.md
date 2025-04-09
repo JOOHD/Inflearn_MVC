@@ -58,9 +58,9 @@
 
 ### ● <a href="grammer/java/builder.md">@Builder</a>
 
-### ● <a href="grammer/java/builder_pattern.md">Builder pattern</a>
-
 ### ● <a href="grammer/java/compact_builder.md">compact() vs builder()</a>
+
+### ● <a href="grammer/java/DTO_Entity_transfer.md">DTO -> Entity (from)</a>
 
 ### ● <a href="grammer/java/model.md">Model(DTO/DOMAIN/VO/CommandObject)</a>
 
@@ -121,8 +121,13 @@
 ### Spring Security
 
 ### ● <a href="grammer/spring/security/SpringSecurity.md">SpringSecurity</a>
+
+### <a href="grammer/spring/security/Security + (JWT & OAuth2).md">Security + (JWT & OAuth2)</a>
+
 ### ● <a href="grammer/spring/security/Security_signin&up.md">Security_signin&up</a>
+
 ### ● <a href="grammer/spring/security/tokenProvider.md">TokenProvider</a>
+### ● <a href="grammer/spring/security/accesstoken.md">accesstoken_flow</a>
 ### ● <a href="grammer/spring/security/JWT_login.md">JWT_login</a>
 ### ● <a href="grammer/spring/security/JWT_implements.md">JWT_implements</a>
 
