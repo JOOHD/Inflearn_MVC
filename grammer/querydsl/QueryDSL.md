@@ -1,5 +1,29 @@
 ## QueryDSL 정의 & 메서드 & 예제
 
+### Q클래스
+    - QueryDSL 이 Product Entity 기반으로 자동 생성해준 클래스
+    - QProduct 클래스는 타입 안전한 쿼리를 작성 도와준다.
+    - 클래스 내부를 보면, 필드들이 전부 QueryDSL 의 Path 타입으로 되어있다.
+
+    ex)
+        public final StringPath productName = createString("productName");
+        public final NumberPath<Integer> price = createNumber("price", Integer.class);
+
+        즉, productName 이나 price 같은 필드에 대해 QueryDSL 이 제공하는 메서드(eq, contains, goe 등) 쿼리 작성할 수 있게 해준다.
+
+### Q클래스 용도
+    1. 타입 안전한 쿼리 작성
+        QProduct.product.category.eq(...) 처럼 IDE 자동완성과 컴파일 타임 오류 확인 가능
+    2. 직관적인 join/filter 가능
+        복잡한 join 이나 where 조건을 객체처럼 다룰 수 있음
+    3. JPA Criteria 보다 간결하고 유지보수 편함
+        코드 가독성도 좋고 실수도 줄어듦
+
+### Q클래스와 관련된 주의사항
+    - 앤티티 변경 시, 반드시 재생성 해야 함
+    - 보통 build/generated/querydsl 경로에 위치
+    - build.gradle 에 sourceSets 로 등록해 IDE에서 인식되도록 해야 함.                
+
 ### QeuryDSL 
 
     예시로 Product Entity 클래스에 QueryDSL 적용하게 되면, @Entity 를 기반으로 타입 세이프한 쿼리 작성을 돕는 메타 모델 클래스이다.
@@ -384,17 +408,6 @@
 		- 키워드가 티셔츠에 포함
 			product.productName.containsIgnoreCase("티셔츠")
 		-> AND 조건으로 묶임!
-
-### Q클래스
-    - QueryDSL 이 Product Entity 기반으로 자동 생성해준 클래스
-    - QProduct 클래스는 타입 안전한 쿼리를 작성 도와준다.
-    - 클래스 내부를 보면, 필드들이 전부 QueryDSL 의 Path 타입으로 되어있다.
-
-    ex)
-        public final StringPath productName = createString("productName");
-        public final NumberPath<Integer> price = createNumber("price", Integer.class);
-
-        즉, productName 이나 price 같은 필드에 대해 QueryDSL 이 제공하는 메서드(eq, contains, goe 등) 쿼리 작성할 수 있게 해준다.
 
 ### 흐름 정리
 
